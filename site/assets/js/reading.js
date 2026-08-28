@@ -463,7 +463,11 @@
       parts.push('Use the favourable dates below deliberately rather than working evenly across the month - concentration beats consistency here.');
     } else {
       parts.push('The transits are asking for consolidation rather than expansion, and the ' + nowCn.animal.n +
-        ' year sits at an awkward angle to your ' + natalCn.animal.n + '.');
+        ' year ' + (rel.score < 0
+          ? 'sits at an awkward angle to your ' + natalCn.animal.n
+          : rel.score > 0.8
+            ? 'is at least friendly to your ' + natalCn.animal.n + ', which softens it'
+            : 'is neutral toward your ' + natalCn.animal.n + ', so it neither helps nor hinders') + '.');
       parts.push('Protect what exists, close what is finished, and postpone launches to a stronger window. Nothing here is permanent - Shani and Guru both move on.');
     }
     if (dash) {

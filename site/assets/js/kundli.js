@@ -135,6 +135,67 @@
     return chart;
   }
 
+  /* ---------- Bhava Chalit (Sripati cusps) -------------------------------
+     The rasi chart puts a graha in the house matching its sign (whole-sign).
+     That is the traditional North Indian drawing, but a graha near a sign
+     boundary often falls into the neighbouring BHAVA once the real cusps are
+     computed from the ascendant and midheaven. Astrologers check both: the
+     rasi chart for the promise, the chalit for where the result actually
+     lands. Sripati trisects each quadrant between the Asc, IC, Desc and MC.
+  ------------------------------------------------------------------------ */
+
+  function bhavaChalit(chart) {
+    var asc = chart.ascLon;
+    var mc = A.norm360(A.midheavenTropical(chart.jd, chart.birth.lon) - A.ayanamsa(chart.jd));
+    var ic = A.norm360(mc + 180);
+
+    var arcTop = A.norm360(asc - mc);     // MC -> Asc, through houses 11 and 12
+    var arcBot = A.norm360(ic - asc);     // Asc -> IC, through houses 2 and 3
+
+    // The four angles plus the two trisections in each of the two computed
+    // quadrants; the remaining five madhyas are the exact opposites.
+    var madhya = new Array(12);
+    madhya[0]  = asc;                                   // 1st  (Asc)
+    madhya[1]  = A.norm360(asc + arcBot / 3);           // 2nd
+    madhya[2]  = A.norm360(asc + 2 * arcBot / 3);       // 3rd
+    madhya[3]  = ic;                                    // 4th  (IC)
+    madhya[9]  = mc;                                    // 10th (MC)
+    madhya[10] = A.norm360(mc + arcTop / 3);            // 11th
+    madhya[11] = A.norm360(mc + 2 * arcTop / 3);        // 12th
+    madhya[4]  = A.norm360(madhya[10] + 180);           // 5th
+    madhya[5]  = A.norm360(madhya[11] + 180);           // 6th
+    madhya[6]  = A.norm360(madhya[0] + 180);            // 7th  (Desc)
+    madhya[7]  = A.norm360(madhya[1] + 180);            // 8th
+    madhya[8]  = A.norm360(madhya[2] + 180);            // 9th
+
+    var i;
+
+    // bhava sandhi: the junction midway between two consecutive madhyas
+    var sandhi = new Array(12);
+    for (i = 0; i < 12; i++) {
+      var a = madhya[i], b = madhya[(i + 1) % 12];
+      sandhi[i] = A.norm360(a + A.norm360(b - a) / 2);
+    }
+
+    function houseOf(lon) {
+      for (var h = 0; h < 12; h++) {
+        var from = sandhi[(h + 11) % 12], to = sandhi[h];
+        if (A.norm360(lon - from) < A.norm360(to - from)) return h + 1;
+      }
+      return 1;
+    }
+
+    var shifted = [];
+    var planets = chart.planets.map(function (p) {
+      var bh = houseOf(p.lon);
+      if (bh !== p.house) shifted.push({ name: p.name, rasi: p.house, chalit: bh });
+      return { name: p.name, rasiHouse: p.house, house: bh, sign: p.sign };
+    });
+
+    return { madhya: madhya, sandhi: sandhi, mc: mc, planets: planets,
+             shifted: shifted, houseOf: houseOf };
+  }
+
   /* ---------- Vimshottari dasha ------------------------------------------ */
 
   function vimshottari(moonLon, birthJD) {
@@ -315,7 +376,7 @@
     houseFrom: houseFrom, relation: relation, dignityOf: dignityOf,
     aspectsCast: aspectsCast, buildChart: buildChart,
     vimshottari: vimshottari, dashaAt: dashaAt,
-    attachDeep: attachDeep,
+    attachDeep: attachDeep, bhavaChalit: bhavaChalit, degInSign: degInSign,
     panchang: panchang, phaseName: phaseName,
     chineseNewYear: chineseNewYear, chinesePillars: chinesePillars,
     animalRelation: animalRelation, taraBala: taraBala, chandraBala: chandraBala,

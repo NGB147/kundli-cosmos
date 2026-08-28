@@ -88,6 +88,36 @@ All of it feeds the question engine: an answer is scored against the house lord'
 dignity, the SAV bindus of that house, the lord's Shadbala ratio, and any dosha bearing on
 the matter - not just the D-1 placement.
 
+**Houses are computed twice.** The rasi chart uses whole-sign houses (the traditional North
+Indian drawing). Alongside it, `bhavaChalit()` computes real Sripati cusps by trisecting
+each quadrant between the Ascendant, IC, Descendant and MC, and reports every graha that
+changes house between the two. Those near-cusp placements are exactly the ones a careless
+chart gets wrong.
+
+## The answer people actually read
+
+Every question now opens with a plain-English verdict and a **real date window**, with the
+classical working folded away behind a toggle beneath it.
+
+`forecast.js` does three things:
+
+- **`timeline()`** scans 72 months ahead, scoring each month from the running
+  dasha/antardasha, the Jupiter and Saturn transits judged from the house in question, and
+  that house's Ashtakavarga bindus. It returns dated windows - "Mar 2028 – Jun 2028, peaks
+  March 2028" - plus the weakest stretch to avoid.
+- **`consensus()`** runs the same question through eight systems independently (Parashari
+  natal, Vimshottari dasha, Ashtakavarga, Navamsa, Shadbala, Western transits, Chinese
+  zodiac, numerology), normalises each to -1..+1, and reports where they agree and where
+  they do not.
+- **`plain()`** writes the sentence.
+
+The badge and the headline are driven by **one** combined number - the detailed Parashari
+score and the multi-system vote weighted equally - so they can never contradict each other.
+The systems are not weighted equally with each other, and the interface says why: the Vedic
+layers derive from the exact birth moment and place, while the Chinese zodiac and numerology
+use only the birth date, so thousands of people share them. Where the systems genuinely
+split, the reading says so instead of manufacturing a verdict.
+
 ## Accuracy
 
 Checked against published values:

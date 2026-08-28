@@ -1,21 +1,25 @@
 /* ============================================================================
    Jyotish Darpan - the living sky
 ============================================================================ */
+/* Noir purple ground, bright silver text, gold for everything that leads
+   the eye. Silver carries the reading; gold marks headings, values and
+   anything favourable. */
 :root{
-  --void:#02010a;
-  --void2:#080619;
-  --panel:#0b0822;
-  --line:#241d54;
-  --line2:#39307d;
-  --star:#eae6ff;
-  --gold:#f5d06f;
+  --void:#0a0614;        /* noir purple, near black */
+  --void2:#140c26;       /* raised panel */
+  --panel:#1a1030;
+  --line:#332450;
+  --line2:#4a3670;
+  --star:#f2f2f7;        /* bright silver - body text */
+  --silver:#dcdce6;
+  --gold:#f7d675;
   --gold-dim:#c9a94e;
   --plasma:#8b6cff;
   --rose:#ff9ecb;
   --cyan:#5fe3e0;
   --green:#7ef2b8;
-  --ink:#b6aee0;
-  --ink-dim:#7d76a8;
+  --ink:#c9c9d8;         /* silver, slightly dimmed */
+  --ink-dim:#8d8aa3;
   --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
   --mono:"Courier New",ui-monospace,monospace;
   --maxw:760px;
@@ -39,16 +43,16 @@ button{background:none;border:none;cursor:pointer;}
 #nebula{
   position:absolute;inset:-40%;will-change:transform;mix-blend-mode:screen;filter:blur(38px);
   background:
-    radial-gradient(closest-side at 20% 28%, rgba(139,108,255,.34), transparent 66%),
-    radial-gradient(closest-side at 80% 68%, rgba(255,158,203,.20), transparent 66%),
-    radial-gradient(closest-side at 58% 12%, rgba(245,208,111,.13), transparent 66%),
-    radial-gradient(closest-side at 38% 82%, rgba(95,227,224,.17), transparent 66%),
-    radial-gradient(closest-side at 68% 45%, rgba(90,63,212,.28), transparent 70%);
+    radial-gradient(closest-side at 20% 28%, rgba(124,86,214,.30), transparent 66%),
+    radial-gradient(closest-side at 80% 68%, rgba(160,110,220,.18), transparent 66%),
+    radial-gradient(closest-side at 58% 12%, rgba(247,214,117,.11), transparent 66%),
+    radial-gradient(closest-side at 38% 82%, rgba(90,60,170,.20), transparent 66%),
+    radial-gradient(closest-side at 68% 45%, rgba(70,45,150,.26), transparent 70%);
 }
 #galaxyCore{
   position:absolute;top:50%;left:50%;width:120vmax;height:120vmax;border-radius:50%;
   transform:translate(-50%,-50%);will-change:transform;
-  background:radial-gradient(circle at center, rgba(255,240,200,.09) 0%, rgba(139,108,255,.05) 22%, transparent 55%);
+  background:radial-gradient(circle at center, rgba(247,214,117,.07) 0%, rgba(124,86,214,.06) 22%, transparent 55%);
 }
 .shoot{position:absolute;width:130px;height:1.5px;background:linear-gradient(90deg,transparent,#fff);
   opacity:0;pointer-events:none;filter:drop-shadow(0 0 6px #fff);}
@@ -67,10 +71,10 @@ h1,h2,h3{font-weight:600;letter-spacing:.01em;}
 .section-h{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
   display:flex;align-items:center;gap:12px;margin:34px 0 14px;}
 .section-h::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent);}
-.lede{font-size:18px;line-height:1.6;color:#d8d2f5;font-style:italic;}
+.lede{font-size:18px;line-height:1.6;color:var(--silver);font-style:italic;}
 .muted{color:var(--ink-dim);}
 
-.card{border:1px solid var(--line);border-radius:16px;padding:17px;background:rgba(11,8,34,.55);
+.card{border:1px solid var(--line);border-radius:16px;padding:17px;background:rgba(20,12,38,.6);
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);margin-bottom:11px;}
 .card h4{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--gold-dim);margin-bottom:7px;}
@@ -79,13 +83,13 @@ h1,h2,h3{font-weight:600;letter-spacing:.01em;}
 
 .pill{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
   padding:4px 10px;border-radius:20px;border:1px solid var(--line2);color:var(--ink);white-space:nowrap;}
-.v-favor{color:var(--green);border-color:rgba(126,242,184,.45);}
+.v-favor{color:var(--gold);border-color:rgba(247,214,117,.5);}
 .v-caution{color:var(--rose);border-color:rgba(255,158,203,.45);}
 .v-neutral{color:var(--ink);border-color:var(--line2);}
 
 /* ---------- gate ------------------------------------------------------ */
 #gate{position:fixed;inset:0;z-index:60;overflow-y:auto;
-  background:radial-gradient(circle at 50% 38%,rgba(8,6,25,.35),var(--void) 78%);
+  background:radial-gradient(circle at 50% 38%,rgba(26,16,48,.45),var(--void) 78%);
   transition:opacity .8s ease;}
 .gate-inner{min-height:100%;display:flex;flex-direction:column;justify-content:center;
   max-width:430px;margin:0 auto;padding:56px 24px 60px;text-align:center;}
@@ -97,7 +101,7 @@ h1,h2,h3{font-weight:600;letter-spacing:.01em;}
   text-transform:uppercase;color:var(--gold-dim);margin-bottom:7px;}
 .field input,.field select{
   width:100%;padding:14px 15px;border-radius:14px;border:1px solid var(--line);
-  background:rgba(8,6,25,.75);color:var(--star);font-family:var(--mono);font-size:15px;letter-spacing:.04em;
+  background:rgba(10,6,20,.8);color:var(--star);font-family:var(--mono);font-size:15px;letter-spacing:.04em;
   -webkit-appearance:none;appearance:none;}
 .field input:focus,.field select:focus{outline:none;border-color:var(--gold-dim);box-shadow:0 0 20px rgba(245,208,111,.16);}
 .field input::placeholder{color:var(--ink-dim);}
@@ -210,11 +214,11 @@ table.grahas .dg{font-size:11px;font-family:var(--mono);letter-spacing:.04em;}
 .answer{margin-top:14px;border-top:1px solid var(--line2);padding-top:15px;}
 .answer .ahead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;}
 .answer .ahead .dm{font-size:19px;color:var(--gold);}
-.answer .op{font-size:18px;line-height:1.55;font-style:italic;color:#e4dfff;margin-bottom:13px;}
+.answer .op{font-size:18px;line-height:1.55;font-style:italic;color:var(--silver);margin-bottom:13px;}
 .answer ul{list-style:none;margin:0 0 13px;}
 .answer ul li{position:relative;padding-left:19px;font-size:15px;line-height:1.6;color:var(--ink);margin-bottom:7px;}
 .answer ul li::before{content:"";position:absolute;left:3px;top:9px;width:5px;height:5px;border-radius:50%;background:var(--gold-dim);}
-.answer ul li.pos::before{background:var(--green);}
+.answer ul li.pos::before{background:var(--gold);}
 .answer ul li.neg::before{background:var(--rose);}
 .answer .sub-block{font-size:15px;line-height:1.6;color:var(--ink);margin-bottom:11px;}
 .answer .sub-block b{color:var(--gold-dim);font-weight:400;font-family:var(--mono);font-size:9.5px;
@@ -250,8 +254,8 @@ table.grahas .dg{font-size:11px;font-family:var(--mono);letter-spacing:.04em;}
   color:var(--ink);position:relative;}
 .daygrid .dd.blank{border:none;}
 .daygrid .dd .dot{width:4px;height:4px;border-radius:50%;margin-top:3px;background:var(--ink-dim);}
-.daygrid .dd.good{border-color:rgba(126,242,184,.5);color:var(--green);background:rgba(126,242,184,.07);}
-.daygrid .dd.good .dot{background:var(--green);}
+.daygrid .dd.good{border-color:rgba(247,214,117,.5);color:var(--gold);background:rgba(247,214,117,.08);}
+.daygrid .dd.good .dot{background:var(--gold);}
 .daygrid .dd.bad{border-color:rgba(255,158,203,.5);color:var(--rose);background:rgba(255,158,203,.07);}
 .daygrid .dd.bad .dot{background:var(--rose);}
 .daygrid .dd.today{box-shadow:0 0 0 2px var(--gold);}
@@ -305,6 +309,49 @@ table.grahas .dg{font-size:11px;font-family:var(--mono);letter-spacing:.04em;}
 .spinner{text-align:center;padding:40px 0;font-family:var(--mono);font-size:11px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--gold-dim);}
 
+/* ---------- the plain answer, at the top of every reading -------------- */
+.verdict-box{
+  border:1px solid var(--gold-dim);border-radius:18px;padding:18px 17px;margin-bottom:16px;
+  background:linear-gradient(160deg,rgba(247,214,117,.10),rgba(26,16,48,.75) 60%);
+}
+.verdict-box .vhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.verdict-box .vword{font-size:29px;line-height:1.05;color:var(--gold);font-weight:600;letter-spacing:.01em;}
+.verdict-box .vconf{font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;
+  padding:5px 10px;border-radius:20px;border:1px solid var(--line2);color:var(--ink-dim);white-space:nowrap;}
+.verdict-box .vconf.high{color:var(--gold);border-color:var(--gold-dim);}
+.verdict-box p{font-size:17px;line-height:1.6;color:var(--star);margin-bottom:9px;}
+.verdict-box p:last-child{margin-bottom:0;}
+.verdict-box p.sub{font-size:15px;color:var(--ink);}
+
+.when{display:flex;gap:10px;margin:14px 0 4px;flex-wrap:wrap;}
+.when .w{flex:1;min-width:132px;border:1px solid var(--line);border-radius:13px;padding:11px 12px;
+  background:rgba(10,6,20,.5);}
+.when .w .k{font-family:var(--mono);font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold-dim);}
+.when .w .v{font-size:18px;margin-top:4px;color:var(--star);line-height:1.25;}
+.when .w .n{font-size:12.5px;color:var(--ink-dim);margin-top:3px;}
+.when .w.avoid{border-color:rgba(255,158,203,.35);}
+.when .w.avoid .k{color:var(--rose);}
+
+/* system agreement */
+.sysgrid{margin-top:6px;}
+.sysrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);}
+.sysrow:last-child{border-bottom:none;}
+.sysrow .sname{flex:0 0 132px;font-size:14.5px;color:var(--star);}
+.sysrow .sbar{flex:1;height:7px;border-radius:5px;background:rgba(74,54,112,.4);position:relative;overflow:hidden;}
+.sysrow .sbar i{position:absolute;top:0;bottom:0;left:50%;border-radius:5px;}
+.sysrow .sbar i.pos{background:var(--gold);}
+.sysrow .sbar i.neg{background:var(--rose);}
+.sysrow .sbar::before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--line2);}
+.sysrow .snote{flex:0 0 100%;font-size:12.5px;color:var(--ink-dim);padding-left:142px;margin-top:-2px;line-height:1.5;}
+.sysrow{flex-wrap:wrap;}
+.sysweight{font-family:var(--mono);font-size:9px;color:var(--ink-dim);flex:0 0 30px;text-align:right;}
+
+.details-toggle{width:100%;margin:4px 0 0;padding:11px 0;border:1px solid var(--line2);border-radius:30px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);
+  background:rgba(74,54,112,.15);}
+.details-toggle:active{background:rgba(74,54,112,.3);}
+.details-body[hidden]{display:none;}
+
 /* ---------- gate extras ------------------------------------------------ */
 .tz-note{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--cyan);
   margin-top:8px;text-align:left;line-height:1.6;}
@@ -323,7 +370,7 @@ table.grahas .dg{font-size:11px;font-family:var(--mono);letter-spacing:.04em;}
 table.av-table td,table.av-table th{text-align:center;padding:7px 4px;font-size:13px;}
 table.av-table td.g{text-align:left;white-space:nowrap;font-size:12.5px;}
 table.av-table td.sav{font-family:var(--mono);font-size:12px;color:var(--ink);}
-table.av-table td.sav.hi{color:var(--green);}
+table.av-table td.sav.hi{color:var(--gold);}
 table.av-table td.sav.lo{color:var(--rose);}
 
 /* ---------- shadbala bars ---------------------------------------------- */
@@ -333,20 +380,20 @@ table.av-table td.sav.lo{color:var(--rose);}
   border:1px solid var(--line);overflow:hidden;}
 .bala-row .btrack i{display:block;height:100%;border-radius:6px;}
 .bala-row .bv{flex:0 0 44px;text-align:right;font-family:var(--mono);font-size:12px;}
-.bala-row .bv.ok{color:var(--green);}
+.bala-row .bv.ok{color:var(--gold);}
 .bala-row .bv.under{color:var(--ink-dim);}
 
 /* ---------- yogas & doshas --------------------------------------------- */
 .card .tier{float:right;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;
   text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid var(--line2);
   color:var(--ink-dim);}
-.card.yoga.major{border-color:rgba(126,242,184,.4);}
-.card.yoga.major .tier{color:var(--green);border-color:rgba(126,242,184,.4);}
+.card.yoga.major{border-color:rgba(247,214,117,.42);}
+.card.yoga.major .tier{color:var(--gold);border-color:rgba(247,214,117,.42);}
 .card.yoga.caution{border-color:rgba(255,158,203,.35);}
 .card.yoga.caution .tier{color:var(--rose);border-color:rgba(255,158,203,.4);}
 .card.dosha.high{border-color:rgba(255,158,203,.5);}
 .card.dosha.high .tier{color:var(--rose);border-color:rgba(255,158,203,.5);}
-.card.dosha.mitigated .tier{color:var(--green);border-color:rgba(126,242,184,.4);}
+.card.dosha.mitigated .tier{color:var(--gold);border-color:rgba(247,214,117,.42);}
 .dosha-dates{margin-top:9px;font-family:var(--mono);font-size:10px;letter-spacing:.09em;
   text-transform:uppercase;color:var(--gold-dim);}
 
@@ -358,7 +405,7 @@ ul.tight li{position:relative;padding-left:17px;font-size:14.5px;line-height:1.5
   color:var(--ink);margin-bottom:6px;}
 ul.tight li::before{content:"";position:absolute;left:2px;top:8px;width:5px;height:5px;
   border-radius:50%;background:var(--gold-dim);}
-ul.tight li.pos::before{background:var(--green);}
+ul.tight li.pos::before{background:var(--gold);}
 ul.tight li.neg::before{background:var(--rose);}
 
 @media (min-width:620px){

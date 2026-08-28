@@ -53,9 +53,9 @@
       ctx.clearRect(0, 0, W, H);
       for (var i = 0; i < stars.length; i++) {
         var s = stars[i], a = Math.max(0, s.b + Math.sin(t * s.sp + s.tw) * 0.32);
-        ctx.fillStyle = s.h === 'g' ? 'rgba(245,208,111,' + a + ')'
-                      : s.h === 'p' ? 'rgba(180,150,255,' + a + ')'
-                      : 'rgba(234,230,255,' + a + ')';
+        ctx.fillStyle = s.h === 'g' ? 'rgba(247,214,117,' + a + ')'
+                      : s.h === 'p' ? 'rgba(150,120,210,' + (a * 0.85) + ')'
+                      : 'rgba(242,242,247,' + a + ')';
         ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill();
         if (s.r > 1.3 * dpr) {
           ctx.fillStyle = 'rgba(255,255,255,' + (a * 0.18) + ')';
@@ -375,6 +375,7 @@
 
     renderChart(chart);
     renderDeep(chart);
+    renderChalit(chart);
     renderVargaView(chart);
     renderAsk(chart);
     renderSky(chart);
@@ -472,6 +473,35 @@
 
     renderDasha(chart);
     renderChartNotes(chart);
+  }
+
+  /* ---- Bhava Chalit: where the houses actually fall ------------------- */
+  function renderChalit(chart) {
+    var host = $('chalitHost');
+    if (!host) return;
+    var bc = K.bhavaChalit(chart);
+    var rows = ['<tr><th>Bhava</th><th>Madhya (midpoint)</th><th>Spans</th></tr>'];
+    for (var i = 0; i < 12; i++) {
+      var from = bc.sandhi[(i + 11) % 12], to = bc.sandhi[i];
+      rows.push('<tr><td class="g">' + (i + 1) + '</td><td>' +
+        esc(D.RASHIS[K.signOf(bc.madhya[i])].n) + ' ' + K.dms(K.degInSign(bc.madhya[i])) + '</td>' +
+        '<td>' + esc(D.RASHIS[K.signOf(from)].n) + ' ' + K.dms(K.degInSign(from)) + ' → ' +
+        esc(D.RASHIS[K.signOf(to)].n) + ' ' + K.dms(K.degInSign(to)) + '</td></tr>');
+    }
+    host.innerHTML =
+      '<p class="lede sm">The rasi chart above places a graha by its sign. The bhava chalit ' +
+      'places it by the real house cusps computed from your ascendant and midheaven. When the two ' +
+      'disagree, the promise is read from the rasi chart and the result from the chalit.</p>' +
+      (bc.shifted.length
+        ? '<div class="card" style="border-color:var(--gold-dim)"><h4>Grahas that change house</h4><p>' +
+          bc.shifted.map(function (x) {
+            return D.GRAHAS[x.name].dev + ': ' + ORD[x.rasi] + ' in the rasi chart, ' +
+                   ORD[x.chalit] + ' by bhava';
+          }).join('; ') + '. These are the placements to read carefully — they sit near a cusp, ' +
+          'so their results lean toward the chalit house.</p></div>'
+        : '<div class="card"><p>No graha changes house between the rasi chart and the bhava chalit. ' +
+          'Your chart is unusually clean on this point: every placement reads the same in both.</p></div>') +
+      '<div class="tscroll"><table class="grahas">' + rows.join('') + '</table></div>';
   }
 
   /* ---- Avakhada chakra, yogas, doshas --------------------------------- */
@@ -762,11 +792,37 @@
     }
 
     slot.querySelector('[data-answer]').innerHTML = answerHTML(ans);
+    var tg = slot.querySelector('[data-toggle]'), bd = slot.querySelector('[data-details]');
+    if (tg && bd) {
+      tg.addEventListener('click', function () {
+        bd.hidden = !bd.hidden;
+        tg.textContent = bd.hidden ? 'Show the full working' : 'Hide the full working';
+      });
+    }
     slot.querySelector('[data-go]').textContent = 'Ask this one differently';
     updateCount();
     setTimeout(function () {
       slot.querySelector('[data-answer]').scrollIntoView({ behavior:'smooth', block:'nearest' });
     }, 60);
+  }
+
+  function sysGrid(cons) {
+    var out = ['<div class="sysgrid">'];
+    cons.systems.forEach(function (y) {
+      var pct = Math.abs(y.norm) * 50;
+      var bar = y.norm >= 0
+        ? '<i class="pos" style="left:50%;width:' + pct.toFixed(1) + '%"></i>'
+        : '<i class="neg" style="left:' + (50 - pct).toFixed(1) + '%;width:' + pct.toFixed(1) + '%"></i>';
+      out.push('<div class="sysrow"><span class="sname">' + esc(y.name) + '</span>' +
+        '<span class="sbar">' + bar + '</span>' +
+        '<span class="sysweight">' + y.weight.toFixed(2) + '</span>' +
+        '<span class="snote">' + esc(y.note) + '</span></div>');
+    });
+    out.push('</div><p class="foot lead-left">Bar shows which way each system leans; the number is ' +
+      'how much weight it carries in the combined verdict. The Vedic layers weigh most because they ' +
+      'are computed from your exact birth moment and place. Chinese zodiac and numerology weigh ' +
+      'least because they use only your birth date, so thousands of people share them.</p>');
+    return out.join('');
   }
 
   function answerHTML(a) {
@@ -777,6 +833,40 @@
       h.push('<div class="sub-block"><b>You asked</b>“' + esc(a.question) + '”' +
         (a.usedDetection ? ' — read against ' + esc(a.domain.subject) + '.' : '') + '</div>');
     }
+
+    /* --- the short answer, first, with real dates --- */
+    if (a.summary) {
+      var sm = a.summary, pl = sm.plain, tl = sm.timeline;
+      h.push('<div class="verdict-box">');
+      h.push('<div class="vhead"><span class="vword">' + esc(pl.word) + '</span>' +
+             '<span class="vconf ' + esc(pl.confidence) + '">' + esc(pl.confidence) + ' confidence</span></div>');
+      pl.lines.forEach(function (line, i) {
+        h.push('<p' + (i ? ' class="sub"' : '') + '>' + esc(line) + '</p>');
+      });
+      h.push('<div class="when">');
+      if (tl.best[0]) {
+        h.push('<div class="w"><div class="k">' + (tl.best[0].strongest ? 'Strongest window' : 'First window') + '</div><div class="v">' +
+          esc(tl.best[0].from + ' – ' + tl.best[0].to) + '</div><div class="n">peaks ' +
+          esc(tl.best[0].peak) + '</div></div>');
+      }
+      if (tl.best[1]) {
+        h.push('<div class="w"><div class="k">' + (tl.best[1].strongest ? 'Strongest window' : 'Then') + '</div><div class="v">' +
+          esc(tl.best[1].from + ' – ' + tl.best[1].to) + '</div><div class="n">peaks ' +
+          esc(tl.best[1].peak) + '</div></div>');
+      }
+      if (tl.avoid[0]) {
+        h.push('<div class="w avoid"><div class="k">Hold back</div><div class="v">' +
+          esc(tl.avoid[0].from + ' – ' + tl.avoid[0].to) + '</div><div class="n">weakest stretch</div></div>');
+      }
+      h.push('</div></div>');
+
+      /* --- how each system voted --- */
+      h.push('<div class="sub-block"><b>What each system says</b>' + sysGrid(sm.consensus) + '</div>');
+
+      h.push('<button type="button" class="details-toggle" data-toggle>Show the full working</button>');
+      h.push('<div class="details-body" data-details hidden>');
+    }
+
     h.push('<p class="op">' + esc(a.opener) + '</p>');
     h.push('<ul>' + a.evidence.map(function (e) {
       var cls = e.w > 0.2 ? 'pos' : e.w < -0.2 ? 'neg' : '';
@@ -800,6 +890,7 @@
       h.push('<div class="sub-block"><b>Upāya · the weak link is ' + esc(D.GRAHAS[a.remedy.planet].dev) +
              '</b>' + esc(a.remedy.text) + '</div>');
     }
+    if (a.summary) h.push('</div>');   // close .details-body
     h.push('</div>');
     return h.join('');
   }

@@ -349,6 +349,17 @@
     return { score: score, bits: bits };
   }
 
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  /* Band a score already normalised to -1..+1 */
+  function bandNorm(v) {
+    if (v >= 0.45)  return { key:'strong',  label:'Strongly favourable', cls:'v-favor' };
+    if (v >= 0.15)  return { key:'favor',   label:'Favourable',          cls:'v-favor' };
+    if (v >= -0.15) return { key:'mixed',   label:'Mixed',               cls:'v-neutral' };
+    if (v >= -0.45) return { key:'caution', label:'Needs caution',       cls:'v-caution' };
+    return { key:'hard', label:'Challenging', cls:'v-caution' };
+  }
+
   function answerQuestion(chart, domainId, questionText, jdNow) {
     var dom = D.DOMAINS.filter(function (x) { return x.id === domainId; })[0];
     var detected = detectDomain(questionText);
@@ -367,7 +378,20 @@
 
     var total = primary.score + dash.score + tran.score + deep.score + dsh.score +
       support.reduce(function (s, x) { return s + x.score * 0.3; }, 0);
-    var b = band(total);
+
+    /* One combined verdict, not two competing ones. The detailed Parashari
+       working and the independent multi-system vote are weighted equally, so
+       the headline sentence and the badge can never contradict each other. */
+    var F = root.Forecast;
+    var tl = F ? F.timeline(chart, dom, jdNow, 72) : null;
+    var cons = F ? F.consensus(chart, dom, jdNow) : null;
+    var detailNorm = clamp(total / 3, -1, 1);
+    var combined = cons ? (detailNorm * 0.5 + cons.merged * 0.5) : detailNorm;
+    var b = cons ? bandNorm(combined) : band(total);
+    var summary = (F && tl && cons)
+      ? { plain: F.plain(dom, b, tl, cons), timeline: tl, consensus: cons,
+          combined: combined, detailScore: total }
+      : null;
 
     // weakest planet in the picture drives the remedy
     var involved = [primary.lord.name].concat(dom.karakas)
@@ -380,6 +404,7 @@
     return {
       domain: dom, usedDetection: usedDetection, question: questionText || '',
       verdict: b, score: total,
+      summary: summary,
       opener: OPENERS[dom.id][b.key],
       evidence: primary.evidence.filter(function (e) { return e.t; }),
       depth: deep.bits, doshaBits: dsh.bits,

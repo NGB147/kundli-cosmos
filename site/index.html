@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#02010a">
+<meta name="description" content="Build your Vedic kundli from real sidereal planetary positions, ask three questions answered from your own chart, and get a monthly reading that blends the Hindu panchang, the Chinese zodiac and the Western calendar.">
+<title>Jyotish Darpan — Your Kundli, Your Questions, Your Month</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<!-- ============ deep sky ============ -->
+<div id="universe">
+  <div class="layer" id="starFar"><canvas id="cFar"></canvas></div>
+  <div id="nebula"></div>
+  <div id="galaxyCore"></div>
+  <div class="layer" id="starMid"><canvas id="cMid"></canvas></div>
+  <div class="layer" id="starNear"><canvas id="cNear"></canvas></div>
+</div>
+
+<!-- ============ gate ============ -->
+<div id="gate">
+  <form class="gate-inner" id="birthForm" autocomplete="off" novalidate>
+    <div class="eyebrow">Sidereal Vedic astrology · computed live</div>
+    <h1 class="grad">Jyotish<br>Darpan</h1>
+    <p class="sub">The mirror of the sky. Give the moment you arrived, and the planets are calculated
+      from scratch — no lookup tables, no generic sun-sign paragraphs.</p>
+
+    <div class="field">
+      <label for="fName">Your name</label>
+      <input type="text" id="fName" placeholder="So the chart knows who it belongs to" maxlength="40">
+    </div>
+
+    <div class="field">
+      <label for="fDate">Date of birth</label>
+      <input type="date" id="fDate" min="1900-01-01" max="2035-12-31" required>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="fTime">Time of birth</label>
+        <input type="time" id="fTime" value="12:00">
+      </div>
+      <div class="field">
+        <label for="fTz">UTC offset</label>
+        <input type="text" id="fTz" value="+5.5" inputmode="decimal">
+      </div>
+    </div>
+
+    <label class="check">
+      <input type="checkbox" id="fNoTime">
+      <span>I don’t know my birth time. Use noon — the Moon, nakshatra and dasha stay close,
+        but the lagna (ascendant) and house positions will be unreliable, and I’ll be told so.</span>
+    </label>
+
+    <div class="field">
+      <label for="fPlace">Place of birth</label>
+      <input type="text" id="fPlace" placeholder="Start typing a city…" autocomplete="off">
+      <div class="suggest" id="suggest" hidden></div>
+    </div>
+
+    <div class="row" id="coordRow">
+      <div class="field">
+        <label for="fLat">Latitude</label>
+        <input type="text" id="fLat" placeholder="28.6139" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label for="fLon">Longitude (E+)</label>
+        <input type="text" id="fLon" placeholder="77.2090" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="err" id="gateErr" role="alert"></div>
+    <button type="submit" class="btn">Cast my kundli</button>
+    <p class="hint">Everything is computed in your browser. Nothing is uploaded,
+      stored on a server, or shared. Your details stay on this device.</p>
+  </form>
+</div>
+
+<!-- ============ app shell ============ -->
+<div id="shell" hidden>
+
+  <header id="topbar">
+    <div class="who">
+      <div class="nm" id="whoName">—</div>
+      <div class="sub" id="whoSub">—</div>
+    </div>
+    <div class="acts">
+      <button type="button" id="btnEdit">Edit</button>
+      <button type="button" id="btnPrint">Save</button>
+    </div>
+  </header>
+
+  <!-- ---- kundli ---- -->
+  <div class="scroll view" id="viewChart">
+    <div class="wrap pad-top pad-bot">
+      <div class="chart-wrap" id="chartHost"></div>
+      <div class="chart-key">
+        <span>North Indian · Rāśi (D‑1)</span><span>Whole‑sign houses</span><span>Lahiri ayanāṁśa</span>
+      </div>
+      <div id="timeWarn"></div>
+      <div class="big3" id="big3"></div>
+      <div class="section-h">The nine grahas</div>
+      <div class="tscroll"><table class="grahas" id="grahaTable"></table></div>
+      <div class="section-h">Vimśottarī daśā</div>
+      <div id="dashaHost"></div>
+      <div class="section-h">What the chart says first</div>
+      <div id="chartNotes"></div>
+      <p class="foot">Positions are sidereal (nirayana), Lahiri ayanāṁśa, computed from<br>
+        Meeus solar–lunar theory and JPL planetary elements.</p>
+    </div>
+  </div>
+
+  <!-- ---- ask ---- -->
+  <div class="scroll view" id="viewAsk" hidden>
+    <div class="wrap pad-top pad-bot">
+      <div class="section-h">Ask the chart</div>
+      <p class="lede">Three questions. Pick the area of life, say it in your own words, and the answer is
+        built from your actual house lords, their dignity, your running daśā and today’s transits.</p>
+      <div class="qcount" id="qCount"></div>
+      <div id="qHost"></div>
+      <p class="foot">Answers are deterministic: the same chart and the same question<br>
+        always produce the same reading. No randomness anywhere.</p>
+    </div>
+  </div>
+
+  <!-- ---- month ---- -->
+  <div class="scroll view" id="viewMonth" hidden>
+    <div class="wrap pad-top pad-bot">
+      <div id="monthHost"><div class="spinner">Reading the sky…</div></div>
+    </div>
+  </div>
+
+  <!-- ---- sky ---- -->
+  <div class="view" id="viewSky" hidden>
+    <div id="skyView">
+      <div id="constellations"></div>
+      <div class="sky-note">Drag to drift through the wheel · tap any rāśi<br>
+        <span id="skyLegend"></span></div>
+    </div>
+  </div>
+
+  <nav id="nav">
+    <button type="button" data-view="viewChart" class="on"><span class="ic">◈</span><span class="tx">Kundli</span></button>
+    <button type="button" data-view="viewAsk"><span class="ic">✧</span><span class="tx">Ask</span></button>
+    <button type="button" data-view="viewMonth"><span class="ic">☾</span><span class="tx">This Month</span></button>
+    <button type="button" data-view="viewSky"><span class="ic">✦</span><span class="tx">Sky</span></button>
+  </nav>
+</div>
+
+<!-- ============ detail sheet ============ -->
+<div id="sheet">
+  <button type="button" class="closer" id="sheetClose">×</button>
+  <div class="wrap pad-top pad-bot" id="sheetBody"></div>
+</div>
+
+<script src="assets/js/astro.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/kundli.js"></script>
+<script src="assets/js/reading.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

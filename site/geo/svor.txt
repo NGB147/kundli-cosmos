@@ -1,0 +1,13 @@
+Vora Samni	10	149	217895	728849	0
+Voralgi	15	59	148192	750668	0
+Vorantangalgollalakuppam	1	207	132920	796332	0
+Vordireddipalle	1	426	141102	782647	0
+Voredu	31	717	184844	796417	0
+Vorikondapalle	1	190	141743	785788	0
+Vorkadi	16	294	127610	749252	0
+Vorkadi Kasba	16	294	127656	749362	0
+Vorugantivaripalem	1	195	153603	796580	0
+Voruguntivandlapalli	1	45	136420	791104	0
+Vorupalli	1	6	142736	797034	0
+Vorupalli	1	6	142796	797085	0
+Vorupallirachapalem	1	6	142669	797085	0

@@ -305,6 +305,62 @@ table.grahas .dg{font-size:11px;font-family:var(--mono);letter-spacing:.04em;}
 .spinner{text-align:center;padding:40px 0;font-family:var(--mono);font-size:11px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--gold-dim);}
 
+/* ---------- gate extras ------------------------------------------------ */
+.tz-note{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--cyan);
+  margin-top:8px;text-align:left;line-height:1.6;}
+.tz-note:empty{display:none;}
+.field-hint{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-dim);
+  margin-top:7px;text-align:left;line-height:1.6;}
+.suggest button.none{color:var(--ink-dim);font-family:var(--mono);font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase;cursor:default;}
+.suggest button.none:hover{background:none;}
+
+/* ---------- vargas ----------------------------------------------------- */
+.varga-pick{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 18px;}
+.varga-pick .chip{padding:7px 11px;font-size:10px;}
+
+/* ---------- ashtakavarga ----------------------------------------------- */
+table.av-table td,table.av-table th{text-align:center;padding:7px 4px;font-size:13px;}
+table.av-table td.g{text-align:left;white-space:nowrap;font-size:12.5px;}
+table.av-table td.sav{font-family:var(--mono);font-size:12px;color:var(--ink);}
+table.av-table td.sav.hi{color:var(--green);}
+table.av-table td.sav.lo{color:var(--rose);}
+
+/* ---------- shadbala bars ---------------------------------------------- */
+.bala-row{display:flex;align-items:center;gap:11px;margin-bottom:9px;}
+.bala-row .bn{flex:0 0 108px;font-size:15px;color:var(--star);}
+.bala-row .btrack{flex:1;height:9px;border-radius:6px;background:rgba(139,108,255,.13);
+  border:1px solid var(--line);overflow:hidden;}
+.bala-row .btrack i{display:block;height:100%;border-radius:6px;}
+.bala-row .bv{flex:0 0 44px;text-align:right;font-family:var(--mono);font-size:12px;}
+.bala-row .bv.ok{color:var(--green);}
+.bala-row .bv.under{color:var(--ink-dim);}
+
+/* ---------- yogas & doshas --------------------------------------------- */
+.card .tier{float:right;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid var(--line2);
+  color:var(--ink-dim);}
+.card.yoga.major{border-color:rgba(126,242,184,.4);}
+.card.yoga.major .tier{color:var(--green);border-color:rgba(126,242,184,.4);}
+.card.yoga.caution{border-color:rgba(255,158,203,.35);}
+.card.yoga.caution .tier{color:var(--rose);border-color:rgba(255,158,203,.4);}
+.card.dosha.high{border-color:rgba(255,158,203,.5);}
+.card.dosha.high .tier{color:var(--rose);border-color:rgba(255,158,203,.5);}
+.card.dosha.mitigated .tier{color:var(--green);border-color:rgba(126,242,184,.4);}
+.dosha-dates{margin-top:9px;font-family:var(--mono);font-size:10px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--gold-dim);}
+
+/* ---------- shared helpers --------------------------------------------- */
+.lede.sm{font-size:16px;margin-bottom:14px;}
+.foot.lead-left{text-align:left;margin-top:12px;}
+ul.tight{margin:6px 0 0;list-style:none;}
+ul.tight li{position:relative;padding-left:17px;font-size:14.5px;line-height:1.55;
+  color:var(--ink);margin-bottom:6px;}
+ul.tight li::before{content:"";position:absolute;left:2px;top:8px;width:5px;height:5px;
+  border-radius:50%;background:var(--gold-dim);}
+ul.tight li.pos::before{background:var(--green);}
+ul.tight li.neg::before{background:var(--rose);}
+
 @media (min-width:620px){
   .daygrid{gap:7px;}
   #nav button .tx{font-size:9.5px;}

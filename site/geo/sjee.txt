@@ -1,0 +1,5 @@
+Jeenmata	28	472	274557	751861	0
+Jeeva Nagar North	30	199	131383	802931	0
+Jeeva Nagar South	30	199	131339	802919	0
+Jeevakhera	28	550	250403	741243	0
+Jeevan Bhima Nagar	15	43	129669	776563	0

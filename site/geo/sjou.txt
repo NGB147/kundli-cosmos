@@ -1,0 +1,3 @@
+Joukulapalle	1	221	143765	789617	0
+Jounri Buzurg	33	417	255338	787238	0
+Jounri Khurd	33	417	255316	787335	0

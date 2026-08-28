@@ -116,6 +116,25 @@
     };
   }
 
+  /* The classical layers live in jyotish.js, which loads after this file.
+     attachDeep() is called once the chart exists so that reading.js can
+     score answers against navamsa, ashtakavarga, shadbala and doshas. */
+  function attachDeep(chart, jdNow) {
+    var J = root.Jyotish;
+    if (!J) return chart;
+    chart.deep = {
+      vargottama: J.vargottama(chart),
+      combust: J.combustion(chart),
+      war: J.planetaryWar(chart),
+      av: J.ashtakavarga(chart),
+      bala: J.shadbala(chart),
+      yogas: J.yogas(chart),
+      doshas: J.doshas(chart, jdNow),
+      avakhada: J.avakhada(chart)
+    };
+    return chart;
+  }
+
   /* ---------- Vimshottari dasha ------------------------------------------ */
 
   function vimshottari(moonLon, birthJD) {
@@ -296,6 +315,7 @@
     houseFrom: houseFrom, relation: relation, dignityOf: dignityOf,
     aspectsCast: aspectsCast, buildChart: buildChart,
     vimshottari: vimshottari, dashaAt: dashaAt,
+    attachDeep: attachDeep,
     panchang: panchang, phaseName: phaseName,
     chineseNewYear: chineseNewYear, chinesePillars: chinesePillars,
     animalRelation: animalRelation, taraBala: taraBala, chandraBala: chandraBala,

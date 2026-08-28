@@ -1,0 +1,7 @@
+Greater Noida	33	566	284962	775360	293908
+Greater Kailash	11	-1	285434	772422	0
+Green Light Sr. Sec. Public School Abhipura	33	553	296523	782141	0
+Green Park	8	745	285553	772052	0
+Green Park Extension	8	745	285624	772029	0
+Greta	27	665	323510	757728	0
+Gretpur	33	488	276720	809562	0

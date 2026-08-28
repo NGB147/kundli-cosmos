@@ -1,0 +1,6 @@
+Vundekod	31	272	165140	776794	0
+Vungaravandlapalle	1	190	137722	782576	0
+Vunisiganipalli	1	207	128253	784637	0
+Vunnaguravayyapalem	1	195	156827	796461	0
+Vunturu	15	333	136316	752803	0
+Vunuguntapalem	1	45	140231	799959	0

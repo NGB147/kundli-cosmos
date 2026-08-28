@@ -1,0 +1,6 @@
+Veyalanur	30	436	97164	786439	0
+Veyilugandalpuram	30	236	92946	775750	0
+Veyilugandapuram	30	201	89702	778554	0
+Veyllulanthapuram	30	236	90686	776868	0
+Veyyalachinta	1	207	131360	790902	0
+Veyyalur	30	175	113984	795447	0

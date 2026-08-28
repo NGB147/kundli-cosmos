@@ -37,6 +37,57 @@ visitor's birth details in their own browser, and nothing leaves the device.
   chandra bala, tithi quality and weekday lordship, producing genuinely personal
   favourable and inauspicious dates.
 
+## Geography
+
+Birth place is resolved against the full GeoNames India gazetteer: **557,135 populated
+places**, deduplicated, covering every city, town and village, each tagged with its
+district and state so identical village names can be told apart. Served in two tiers:
+
+- **Inline** (`site/assets/js/geo-top.js`, 117 KB) — the 2,600 places of population 5,000+,
+  searchable with zero network.
+- **Sharded** (`site/geo/`, 4,436 files, 17.5 MB) — everything else, adaptively split by
+  name prefix so no shard exceeds ~2,500 entries. Fetched only when the inline tier
+  cannot answer the query.
+
+Rebuild the gazetteer from a fresh GeoNames dump with:
+
+```bash
+node tools/build-geo.cjs IN.txt admin1CodesASCII.txt admin2Codes.txt
+```
+
+India's clock history is applied automatically from the birth date, because getting it
+wrong moves the lagna by up to a full rashi:
+
+| Period | Offset |
+|---|---|
+| before 1 Jan 1906 | +5:21:10 (Madras Mean Time) |
+| 1 Oct 1941 - 15 May 1942 | +6:30 |
+| 1 Sep 1942 - 15 Oct 1945 | +6:30 |
+| otherwise | +5:30 |
+
+## Classical layers
+
+Beyond the D-1 chart, the site computes what an astrologer actually judges a kundli on:
+
+- **16 divisional charts** - D-1, D-2, D-3, D-4, D-7, D-9, D-10, D-12, D-16, D-20, D-24,
+  D-27, D-30, D-40, D-45, D-60, with vargottama detection
+- **Ashtakavarga** - Bhinnashtakavarga for all seven grahas plus Sarvashtakavarga
+- **Shadbala** - Sthana, Dig, Kala, Cheshta and Naisargika components against the
+  classical minimum for each graha (Drik bala is deliberately omitted)
+- **Combustion (asta)** and **graha yuddha**
+- **Yogas** - Pancha Mahapurusha, Gaja Kesari, Budha-Aditya, Chandra-Mangala,
+  Sunapha/Anapha/Durudhara/Kemadruma, Amala, Neecha Bhanga, Raja, Dhana,
+  Vipareeta Raja, Shakata
+- **Doshas** - Manglik with classical cancellations, Kaal Sarpa (all 12 named types plus
+  partial), Sade Sati with computed phase dates, Shani Dhaiya, Pitra indication
+- **Avakhada chakra** - Varna, Vashya, Yoni, Gana, Nadi, Tatva, nakshatra and rashi lords,
+  and the nama akshara
+- **Muhurtas** - sunrise, sunset, Rahu kaal, Yamaganda, Gulika and Abhijit
+
+All of it feeds the question engine: an answer is scored against the house lord's navamsa
+dignity, the SAV bindus of that house, the lord's Shadbala ratio, and any dosha bearing on
+the matter - not just the D-1 placement.
+
 ## Accuracy
 
 Checked against published values:
@@ -49,6 +100,11 @@ Checked against published values:
 | Chinese New Year 2000–2027 | all 9 sampled dates exact |
 | Holi, Ugadi, Diwali tithi + month | correct, with correct Vikram/Shaka years |
 | Ascendant (via sunrise reconstruction) | within the expected 3–7 min refraction offset |
+| Sunrise / sunset, six cities | within 1–3 min of published |
+| Ashtakavarga column totals | 48/49/39/54/56/52/39, sum 337 — exact |
+| Navamsa formula | identical to the chara/sthira rule over 360,000 samples |
+| Rahu kaal, Delhi Friday | 10:46–12:22 vs published 10:45–12:20 |
+| Place coordinates (GeoNames) | within 1–4 km of published city centres |
 
 Valid for births from 1900 to 2035. Latitudes beyond ±66.5° are rejected because the
 ascendant is undefined there for part of the year.
@@ -75,11 +131,16 @@ deployed site is the static contents of `site/`.
 site/
   index.html
   assets/css/style.css
-  assets/js/astro.js      ephemeris
-  assets/js/data.js       rashis, nakshatras, dignities, panchang names, cities
+  assets/js/astro.js      ephemeris, sunrise/sunset, India clock history
+  assets/js/data.js       rashis, nakshatras, dignities, panchang names, world cities
+  assets/js/geo-top.js    generated: the inline tier of the India gazetteer
   assets/js/kundli.js     chart, dasha, panchang, Chinese pillars
+  assets/js/jyotish.js    vargas, ashtakavarga, shadbala, yogas, doshas, muhurtas
   assets/js/reading.js    question engine and monthly reading
   assets/js/app.js        interface
+  geo/                    generated: 4,436 gazetteer shards + manifest
+tools/
+  build-geo.cjs           rebuilds both gazetteer tiers from a GeoNames dump
 ```
 
 ## A note on what this is

@@ -1,0 +1,6 @@
+Zuvvaguntapalem	1	6	148515	800382	0
+Zuvvaladinne	1	6	148080	800704	0
+Zuvvalaguntapalli	1	6	146913	797742	0
+Zuvvalapalem	1	45	138953	799028	0
+Zuvvaleru	1	195	156378	796141	0
+Zuvvigunta	1	195	154384	797228	0

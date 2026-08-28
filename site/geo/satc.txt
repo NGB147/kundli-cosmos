@@ -1,0 +1,7 @@
+Atchammapalle	1	195	151058	795684	0
+Atchampalle	1	195	154112	790019	0
+Atchampalli	1	221	143165	790873	0
+Atchampeta	1	195	157017	789402	0
+Atchampeta	1	195	155413	789502	0
+Atchukattukhandrika	1	45	137703	799151	0
+Atchutharayapuram	30	198	111057	796822	0

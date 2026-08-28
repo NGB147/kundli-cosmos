@@ -52,6 +52,8 @@
       </div>
     </div>
 
+    <p class="tz-note" id="tzNote"></p>
+
     <label class="check">
       <input type="checkbox" id="fNoTime">
       <span>I don’t know my birth time. Use noon — the Moon, nakshatra and dasha stay close,
@@ -60,8 +62,10 @@
 
     <div class="field">
       <label for="fPlace">Place of birth</label>
-      <input type="text" id="fPlace" placeholder="Start typing a city…" autocomplete="off">
+      <input type="text" id="fPlace" placeholder="Village, town or city…" autocomplete="off">
       <div class="suggest" id="suggest" hidden></div>
+      <p class="field-hint">All 557,135 populated places in India, down to village level,
+        plus major world cities.</p>
     </div>
 
     <div class="row" id="coordRow">
@@ -109,10 +113,32 @@
       <div class="tscroll"><table class="grahas" id="grahaTable"></table></div>
       <div class="section-h">Vimśottarī daśā</div>
       <div id="dashaHost"></div>
+      <div class="section-h">Avakhaḍa chakra</div>
+      <div id="avakhada"></div>
+      <div class="section-h">Yogas in your chart</div>
+      <div id="yogaHost"></div>
+      <div class="section-h">Doṣas</div>
+      <div id="doshaHost"></div>
       <div class="section-h">What the chart says first</div>
       <div id="chartNotes"></div>
       <p class="foot">Positions are sidereal (nirayana), Lahiri ayanāṁśa, computed from<br>
         Meeus solar–lunar theory and JPL planetary elements.</p>
+    </div>
+  </div>
+
+  <!-- ---- divisional charts, ashtakavarga, bala ---- -->
+  <div class="scroll view" id="viewVarga" hidden>
+    <div class="wrap pad-top pad-bot">
+      <div class="section-h">Divisional charts (vargas)</div>
+      <p class="lede">The D-1 shows the event; the vargas show whether it holds. Navāṁśa (D-9) is the
+        one every astrologer checks second.</p>
+      <div class="varga-pick" id="vargaPick"></div>
+      <div class="chart-wrap" id="vargaHost"></div>
+      <div id="vargaNote"></div>
+      <div class="section-h">Aṣṭakavarga</div>
+      <div id="avHost"></div>
+      <div class="section-h">Ṣaḍbala</div>
+      <div id="balaHost"></div>
     </div>
   </div>
 
@@ -133,6 +159,8 @@
   <div class="scroll view" id="viewMonth" hidden>
     <div class="wrap pad-top pad-bot">
       <div id="monthHost"><div class="spinner">Reading the sky…</div></div>
+      <div class="section-h" id="muhurtaHead" hidden>Today’s muhūrtas</div>
+      <div id="muhurtaHost"></div>
     </div>
   </div>
 
@@ -147,6 +175,7 @@
 
   <nav id="nav">
     <button type="button" data-view="viewChart" class="on"><span class="ic">◈</span><span class="tx">Kundli</span></button>
+    <button type="button" data-view="viewVarga"><span class="ic">⊞</span><span class="tx">Vargas</span></button>
     <button type="button" data-view="viewAsk"><span class="ic">✧</span><span class="tx">Ask</span></button>
     <button type="button" data-view="viewMonth"><span class="ic">☾</span><span class="tx">This Month</span></button>
     <button type="button" data-view="viewSky"><span class="ic">✦</span><span class="tx">Sky</span></button>
@@ -161,7 +190,9 @@
 
 <script src="assets/js/astro.js"></script>
 <script src="assets/js/data.js"></script>
+<script src="assets/js/geo-top.js"></script>
 <script src="assets/js/kundli.js"></script>
+<script src="assets/js/jyotish.js"></script>
 <script src="assets/js/reading.js"></script>
 <script src="assets/js/app.js"></script>
 </body>

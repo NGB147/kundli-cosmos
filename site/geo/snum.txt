@@ -1,0 +1,7 @@
+Numaligarh	3	709	266225	937223	7386
+Numaligarh Refinery Township	3	709	265885	937443	2318
+Numa Khera	33	301	262628	808184	0
+Numar	4	505	249600	862936	0
+Numayan	33	584	253752	817610	0
+Number One Rudraguppe	15	188	121469	758367	0
+Number Two Rudraguppe	15	188	121262	758599	0

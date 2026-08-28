@@ -1,0 +1,4 @@
+Cuttack	25	292	204650	858793	610189
+Cuttamithavaripalli	15	47	135776	782828	0
+Cuttavandlapalli	1	45	137565	790899	0
+Cuttiyalattur	30	204	116828	773527	0

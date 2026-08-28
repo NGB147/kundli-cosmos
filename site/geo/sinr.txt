@@ -1,0 +1,4 @@
+Inrath Kalan	4	394	252629	842968	0
+Inrath Khurd	4	394	252584	843035	0
+Inraura	33	31	272159	813266	0
+Inroak/Chinlak	0	79	79844	935558	0

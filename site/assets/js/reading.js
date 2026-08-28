@@ -281,6 +281,74 @@
     return bestHits > 0 ? best : null;
   }
 
+  /* ---- classical depth layer: navamsa, ashtakavarga, shadbala, doshas ---- */
+
+  function depthLayer(chart, houseNum, karakas) {
+    var J = root.Jyotish;
+    if (!J || !chart.deep) return { score: 0, bits: [] };
+    var bits = [], score = 0;
+    var h = chart.houses[houseNum - 1];
+    var lord = chart.byName[h.lord];
+
+    // 1. how the house lord survives into the navamsa
+    var d9 = J.VARGAS.D9(lord.lon);
+    var d9dig = K.dignityOf(lord.name, d9 * 30 + 15);
+    var isVarg = chart.deep.vargottama.indexOf(lord.name) >= 0;
+    if (isVarg) {
+      score += 1.0;
+      bits.push({ w: 1.0, t: D.GRAHAS[lord.name].dev + ' is vargottama - it holds the same rashi in ' +
+        'both your D-1 and D-9. Whatever this house promises, it actually delivers; vargottama is the ' +
+        'single clearest sign that a placement is not merely cosmetic.' });
+    } else {
+      var w = d9dig.score * 0.5;
+      score += w;
+      bits.push({ w: w, t: 'In the Navamsa (D-9), the chart that shows whether a promise matures, ' +
+        D.GRAHAS[lord.name].dev + ' moves to ' + rashi(d9).n + ' - ' + d9dig.label.toLowerCase() +
+        '. ' + (d9dig.score > 0
+          ? 'It strengthens after marriage and in the second half of life.'
+          : 'It weakens in the D-9, so early promise here needs deliberate maintenance to hold.') });
+    }
+
+    // 2. ashtakavarga bindus in this house's sign
+    var bindus = chart.deep.av.sav[h.sign];
+    var bw = (bindus - 28) * 0.12;
+    score += bw;
+    bits.push({ w: bw, t: 'Sarvashtakavarga gives this house ' + bindus + ' bindus out of a possible 56. ' +
+      (bindus >= 30 ? 'Above 28 is a supported house - transits through it tend to produce results.'
+       : bindus >= 25 ? 'That is around the average of 28, so outcomes here track your effort rather than luck.'
+       : 'Below 25 bindus is a thin house - it needs stronger transits than most people to move.') });
+
+    // 3. shadbala of the lord
+    var sb = chart.deep.bala[lord.name];
+    if (sb) {
+      var rw = (sb.ratio - 1) * 0.7;
+      score += rw;
+      bits.push({ w: rw, t: D.GRAHAS[lord.name].dev + ' has ' + sb.rupas.toFixed(2) +
+        ' rupas of Shadbala against the ' + (sb.required / 60).toFixed(2) + ' its class requires - ' +
+        (sb.ratio >= 1 ? 'above the threshold, so it can act on its own initiative.'
+                       : 'below the threshold, so it depends on transits and dasha to be effective.') });
+    }
+    return { score: score, bits: bits };
+  }
+
+  function doshaLayer(chart, domId) {
+    if (!chart.deep) return { score: 0, bits: [] };
+    var relevant = { love: ['manglik','kaalsarpa'], family: ['manglik','pitra'],
+                     career: ['sadesati','kaalsarpa'], money: ['sadesati','kaalsarpa'],
+                     health: ['sadesati','dhaiya'], timing: ['sadesati','kaalsarpa'],
+                     travel: ['kaalsarpa'], education: ['kaalsarpa','dhaiya'] }[domId] || [];
+    var bits = [], score = 0;
+    chart.deep.doshas.forEach(function (d) {
+      var key = d.key.replace('-partial', '');
+      if (relevant.indexOf(key) < 0) return;
+      var w = d.severity === 'high' ? -0.9 : d.severity === 'moderate' ? -0.5
+            : d.severity === 'mitigated' ? -0.15 : -0.25;
+      score += w;
+      bits.push({ w: w, t: d.name + ': ' + d.t });
+    });
+    return { score: score, bits: bits };
+  }
+
   function answerQuestion(chart, domainId, questionText, jdNow) {
     var dom = D.DOMAINS.filter(function (x) { return x.id === domainId; })[0];
     var detected = detectDomain(questionText);
@@ -294,8 +362,10 @@
     });
     var dash = dashaLayer(chart, dom.houses[0], dom.karakas, jdNow);
     var tran = transitLayer(chart, dom.houses[0], jdNow);
+    var deep = depthLayer(chart, dom.houses[0], dom.karakas);
+    var dsh = doshaLayer(chart, dom.id);
 
-    var total = primary.score + dash.score + tran.score +
+    var total = primary.score + dash.score + tran.score + deep.score + dsh.score +
       support.reduce(function (s, x) { return s + x.score * 0.3; }, 0);
     var b = band(total);
 
@@ -312,6 +382,7 @@
       verdict: b, score: total,
       opener: OPENERS[dom.id][b.key],
       evidence: primary.evidence.filter(function (e) { return e.t; }),
+      depth: deep.bits, doshaBits: dsh.bits,
       supportText: supportSentence(chart, dom, support),
       dashaText: dash.text, transitText: tran.text,
       timing: timingSentence(chart, dash.d, jdNow),
@@ -364,6 +435,18 @@
         ' from your Chandra rashi - ' + (good ? 'a supportive gochara' : 'an unsupportive gochara') + '.');
     });
     var tran = transitLayer(chart, 1, jdNow);
+
+    // Ashtakavarga weights the same transit differently for different people
+    if (chart.deep) {
+      var jupSign = K.signOf(A.siderealLongitude('Jupiter', jdNow));
+      var satSign = K.signOf(A.siderealLongitude('Saturn', jdNow));
+      var jb = chart.deep.av.sav[jupSign], sb2 = chart.deep.av.sav[satSign];
+      score += (jb - 28) * 0.09 + (sb2 - 28) * 0.06;
+      gocharaBits.push('In your Sarvashtakavarga, ' + rashi(jupSign).n + ' carries ' + jb +
+        ' bindus and ' + rashi(satSign).n + ' carries ' + sb2 + ' (28 is average). ' +
+        'The same transit lands differently on different charts, and this is the number that says how.');
+    }
+
     layers.push({
       key:'vedic', title:'Vedic sky', icon:'🕉',
       text: gocharaBits.join(' ') + (tran.sade ? ' ' + tran.text : '')

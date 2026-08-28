@@ -1,0 +1,14 @@
+Yegavamitta	1	6	142431	800012	0
+Yegavapalakur	1	207	133274	790608	0
+Yegavur	1	45	136296	791488	0
+Yeggigani Tanda	31	448	162084	782240	0
+Yegurapalem	1	207	137272	790713	0
+Yegutavalasa	1	194	186443	834045	0
+Yeguvabalijapalem	1	6	142762	800767	0
+Yeguvajangampalli	1	207	136962	790398	0
+Yeguvamasapalli	1	207	131846	791529	0
+Yeguvamoravaripalli	1	207	136656	790196	0
+Yeguvamukkavaripalli	1	190	140632	792864	0
+Yeguvanampalli	1	207	134222	790025	0
+Yeguvapalli	1	207	136259	790631	0
+Yeguvurayavalasa	1	176	184314	832102	0

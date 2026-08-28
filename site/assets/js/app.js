@@ -112,52 +112,187 @@
   /* =========================================================================
      2. the gate
   ========================================================================= */
-  var fPlace = $('fPlace'), suggest = $('suggest'), chosenCity = null;
+  var fPlace = $('fPlace'), suggest = $('suggest');
+  var pickedIsIndia = false;
 
-  function searchCities(q) {
-    q = q.trim().toLowerCase();
-    if (q.length < 2) return [];
-    var starts = [], contains = [];
-    for (var i = 0; i < D.CITIES.length; i++) {
-      var c = D.CITIES[i], n = c[0].toLowerCase();
-      if (n.indexOf(q) === 0) starts.push(c);
-      else if (n.indexOf(q) > 0 || c[1].toLowerCase().indexOf(q) === 0) contains.push(c);
-      if (starts.length >= 8) break;
-    }
-    return starts.concat(contains).slice(0, 8);
+  /* ---- the gazetteer -------------------------------------------------
+     Tier 1: GeoIN.TOP, ~2600 Indian places of real size, already in memory.
+     Tier 2: 557,135 places sharded under /geo/, fetched only when the first
+     tier cannot satisfy the query. India is covered down to village level. */
+
+  var manifest = null, manifestPending = null, shardCache = {};
+
+  function norm(s) {
+    s = String(s).toLowerCase();
+    if (s.normalize) s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return s.replace(/[^a-z0-9]+/g, '');
   }
 
-  function renderSuggest(list) {
-    if (!list.length) { suggest.hidden = true; return; }
-    suggest.innerHTML = list.map(function (c, i) {
-      return '<button type="button" data-i="' + i + '">' + esc(c[0]) +
-             '<small>' + esc(c[1]) + ' · UTC' + (c[4] >= 0 ? '+' : '') + c[4] + '</small></button>';
-    }).join('');
-    suggest.hidden = false;
-    Array.prototype.forEach.call(suggest.children, function (btn) {
-      btn.addEventListener('mousedown', function (e) {
-        e.preventDefault();
-        pickCity(list[+btn.dataset.i]);
+  // parse one gazetteer line into the shared result shape
+  function parseIN(line) {
+    var f = line.split('\t');
+    var st = window.GeoIN.STATES[+f[1]] || '';
+    var dt = window.GeoIN.DISTS[+f[2]] || '';
+    var where = dt && dt !== f[0] ? dt + ', ' + st : st;
+    return {
+      name: f[0], where: where + (st ? ', India' : 'India'),
+      lat: +f[3] / 10000, lon: +f[4] / 10000, pop: +f[5] || 0, india: true
+    };
+  }
+
+  var TOP_ROWS = null;
+  function topRows() {
+    if (!TOP_ROWS) TOP_ROWS = window.GeoIN.TOP.split('\n');
+    return TOP_ROWS;
+  }
+
+  function loadManifest() {
+    if (manifest) return Promise.resolve(manifest);
+    if (manifestPending) return manifestPending;
+    manifestPending = fetch('geo/manifest.txt')
+      .then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (t) {
+        manifest = {};
+        t.split('\n').forEach(function (p) { if (p) manifest[p] = 1; });
+        return manifest;
+      })
+      .catch(function () { manifest = {}; return manifest; });
+    return manifestPending;
+  }
+
+  function shardFor(key) {
+    for (var L = 6; L >= 3; L--) {
+      var p = (key + '______').slice(0, L);
+      if (manifest[p]) return p;
+    }
+    return null;
+  }
+
+  function loadShard(p) {
+    if (shardCache[p]) return Promise.resolve(shardCache[p]);
+    // shard files carry an "s" prefix so names like "con"/"aux"/"nul" are not
+    // Windows reserved device names at build time
+    return fetch('geo/s' + p + '.txt')
+      .then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (t) {
+        shardCache[p] = t ? t.split('\n') : [];
+        return shardCache[p];
+      })
+      .catch(function () { shardCache[p] = []; return shardCache[p]; });
+  }
+
+  function rank(rows, key, parse) {
+    var starts = [], inside = [];
+    for (var i = 0; i < rows.length; i++) {
+      var rec = parse(rows[i]);
+      var n = norm(rec.name);
+      if (n.indexOf(key) === 0) starts.push(rec);
+      else if (n.indexOf(key) > 0) inside.push(rec);
+      if (starts.length > 400) break;
+    }
+    var byPop = function (a, b) { return b.pop - a.pop; };
+    return starts.sort(byPop).concat(inside.sort(byPop));
+  }
+
+  function searchWorld(key) {
+    return rank(D.CITIES, key, function (c) {
+      return { name: c[0], where: c[1], lat: c[2], lon: c[3], tz: c[4], india: false, pop: 1 };
+    });
+  }
+
+  var searchSeq = 0;
+  function runSearch(raw) {
+    var key = norm(raw);
+    if (key.length < 2) { suggest.hidden = true; return; }
+    var seq = ++searchSeq;
+
+    var local = rank(topRows(), key, parseIN).concat(searchWorld(key));
+    render(local, local.length < 8 && key.length >= 3);
+
+    // reach for the full gazetteer only when the inline tier is thin
+    if (key.length < 3 || local.length >= 8) return;
+    loadManifest().then(function () {
+      var p = shardFor(key);
+      if (!p || seq !== searchSeq) return;
+      return loadShard(p).then(function (rows) {
+        if (seq !== searchSeq) return;
+        var seen = {};
+        local.forEach(function (r) { seen[norm(r.name) + r.lat.toFixed(2)] = 1; });
+        var extra = rank(rows, key, parseIN).filter(function (r) {
+          var k = norm(r.name) + r.lat.toFixed(2);
+          if (seen[k]) return false;
+          seen[k] = 1; return true;
+        });
+        render(local.concat(extra), false);
       });
     });
   }
 
-  function pickCity(c) {
-    chosenCity = c;
-    fPlace.value = c[0] + ', ' + c[1];
-    $('fLat').value = c[2];
-    $('fLon').value = c[3];
-    $('fTz').value = (c[4] >= 0 ? '+' : '') + c[4];
+  function render(list, searching) {
+    if (!list.length && !searching) {
+      suggest.innerHTML = '<button type="button" disabled class="none">' +
+        'No match. Type latitude and longitude below instead.</button>';
+      suggest.hidden = false;
+      return;
+    }
+    var shown = list.slice(0, 10);
+    suggest.innerHTML = shown.map(function (c, i) {
+      return '<button type="button" data-i="' + i + '">' + esc(c.name) +
+             '<small>' + esc(c.where) + (c.pop > 1000 ? ' · pop ' + fmtPop(c.pop) : '') + '</small></button>';
+    }).join('') + (searching
+      ? '<button type="button" disabled class="none">searching all 557,135 Indian places…</button>'
+      : '');
+    suggest.hidden = false;
+    Array.prototype.forEach.call(suggest.children, function (btn) {
+      if (btn.disabled) return;
+      btn.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        pickPlace(shown[+btn.dataset.i]);
+      });
+    });
+  }
+
+  function fmtPop(n) {
+    if (n >= 10000000) return (n / 10000000).toFixed(1) + ' Cr';
+    if (n >= 100000) return (n / 100000).toFixed(1) + ' L';
+    if (n >= 1000) return Math.round(n / 1000) + 'k';
+    return String(n);
+  }
+
+  function pickPlace(c) {
+    fPlace.value = c.name + ', ' + c.where;
+    $('fLat').value = c.lat.toFixed(4);
+    $('fLon').value = c.lon.toFixed(4);
+    pickedIsIndia = !!c.india;
+    if (c.india) applyIndiaTz();
+    else $('fTz').value = (c.tz >= 0 ? '+' : '') + c.tz;
     suggest.hidden = true;
   }
 
-  fPlace.addEventListener('input', function () {
-    chosenCity = null;
-    renderSuggest(searchCities(fPlace.value));
-  });
+  /* India's offset depends on the birth DATE, not just the place:
+     +5:21:10 before 1906, +6:30 in the wartime years, +5:30 otherwise. */
+  function applyIndiaTz() {
+    if (!pickedIsIndia) return;
+    var dv = $('fDate').value;
+    if (!dv) { $('fTz').value = '+5.5'; return; }
+    var p = dv.split('-');
+    var off = A.indiaOffset(+p[0], +p[1], +p[2]);
+    $('fTz').value = (off >= 0 ? '+' : '') + (Math.round(off * 10000) / 10000);
+    var note = $('tzNote');
+    if (note) {
+      note.textContent = Math.abs(off - 5.5) < 1e-9 ? '' :
+        (off === 6.5
+          ? 'India ran on UTC+6:30 during the war years — offset set automatically.'
+          : 'Before 1906 India kept Madras Mean Time, UTC+5:21:10 — offset set automatically.');
+    }
+  }
+
+  fPlace.addEventListener('input', function () { runSearch(fPlace.value); });
+  fPlace.addEventListener('focus', function () { loadManifest(); });
   fPlace.addEventListener('blur', function () {
-    setTimeout(function () { suggest.hidden = true; }, 120);
+    setTimeout(function () { suggest.hidden = true; }, 140);
   });
+  $('fDate').addEventListener('change', applyIndiaTz);
 
   $('fNoTime').addEventListener('change', function () {
     var on = this.checked;
@@ -201,6 +336,7 @@
       name: ($('fName').value || '').trim() || 'Traveller',
       y:y, m:m, d:d, hh:hh, mm:mm, tz:tz, lat:lat, lon:lon,
       place: fPlace.value.trim() || (lat.toFixed(2) + ', ' + lon.toFixed(2)),
+      india: pickedIsIndia,
       timeKnown: !noTime
     };
     try { localStorage.setItem('jd.birth', JSON.stringify(birth)); } catch (e2) {}
@@ -224,7 +360,7 @@
   }
 
   function launch(birth) {
-    var chart = K.buildChart(birth);
+    var chart = K.attachDeep(K.buildChart(birth), nowJD());
     state.chart = chart;
     state.answers = [null, null, null];
     state.month = null;
@@ -238,6 +374,8 @@
       D.NAKSHATRAS[chart.moonNak].n + ' · ' + fmtDate({ y:birth.y, m:birth.m, d:birth.d });
 
     renderChart(chart);
+    renderDeep(chart);
+    renderVargaView(chart);
     renderAsk(chart);
     renderSky(chart);
     show('viewChart');
@@ -245,7 +383,7 @@
   }
 
   function show(id) {
-    ['viewChart','viewAsk','viewMonth','viewSky'].forEach(function (v) {
+    ['viewChart','viewVarga','viewAsk','viewMonth','viewSky'].forEach(function (v) {
       $(v).hidden = (v !== id);
     });
     Array.prototype.forEach.call($('nav').children, function (b) {
@@ -334,6 +472,150 @@
 
     renderDasha(chart);
     renderChartNotes(chart);
+  }
+
+  /* ---- Avakhada chakra, yogas, doshas --------------------------------- */
+  function renderDeep(chart) {
+    var dp = chart.deep;
+    if (!dp) return;
+    var av = dp.avakhada;
+    function kv(k, v) { return '<div><div class="k">' + esc(k) + '</div><div class="v">' + esc(v) + '</div></div>'; }
+
+    $('avakhada').innerHTML = '<div class="pan-grid">' +
+      kv('Varna', av.varna) + kv('Vashya', av.vashya) +
+      kv('Yoni', av.yoni) + kv('Gana', av.gana) +
+      kv('Nadi', av.nadi) + kv('Tatva', av.tatva) +
+      kv('Nakshatra lord', D.GRAHAS[av.nakshatraLord].dev) +
+      kv('Rashi lord', D.GRAHAS[av.rashiLord].dev) +
+      kv('Nama akshara', av.syllable) +
+      kv('Vargottama', dp.vargottama.length
+          ? dp.vargottama.map(function (n) { return D.GRAHAS[n].dev; }).join(', ') : 'none') +
+      '</div><p class="foot lead-left">These are the traditional matching attributes, the same ones ' +
+      'a pandit reads off before Guna Milan. Nama akshara is the syllable your name would classically ' +
+      'begin with, from ' + esc(D.NAKSHATRAS[chart.moonNak].n) + ' pada ' + chart.moonPada + '.</p>';
+
+    var extras = [];
+    if (dp.combust.length) {
+      extras.push('<div class="card"><h4>Combust (asta)</h4><p>' +
+        dp.combust.map(function (c) {
+          return D.GRAHAS[c.name].dev + ' is ' + (c.deep ? 'deeply ' : '') + 'combust, ' +
+            c.sep.toFixed(1) + ' degrees from the Sun (limit ' + c.limit + ')';
+        }).join('; ') + '. A combust graha still rules its houses, but it acts through the Sun: its ' +
+        'results arrive via authority, the father, or your own reputation rather than independently.</p></div>');
+    }
+    if (dp.war.length) {
+      extras.push('<div class="card"><h4>Graha yuddha (planetary war)</h4><p>' +
+        dp.war.map(function (w) {
+          return D.GRAHAS[w.winner].dev + ' defeats ' + D.GRAHAS[w.loser].dev + ' by ' + w.sep.toFixed(2) + ' degrees';
+        }).join('; ') + '. The defeated graha gives its results weakly for life.</p></div>');
+    }
+
+    $('yogaHost').innerHTML = (dp.yogas.length
+      ? dp.yogas.map(function (y) {
+          return '<div class="card yoga ' + y.tier + '"><h4>' + esc(y.name) +
+            ' <span class="tier">' + y.tier + '</span></h4><p>' + esc(y.t) + '</p></div>';
+        }).join('')
+      : '<div class="card"><p>No yoga from the standard classical set is formed in this chart. That is ' +
+        'common and not a deficiency: most charts run on house lords and dasha rather than named yogas.</p></div>')
+      + extras.join('');
+
+    $('doshaHost').innerHTML = dp.doshas.length
+      ? dp.doshas.map(function (d) {
+          var dates = '';
+          if (d.dates && d.dates.start && d.dates.end) {
+            var a = A.fromJD(d.dates.start), b = A.fromJD(d.dates.end);
+            dates = '<p class="dosha-dates">Window: ' + MONTHS[a.m - 1] + ' ' + a.y +
+                    ' to ' + MONTHS[b.m - 1] + ' ' + b.y + '</p>';
+          }
+          return '<div class="card dosha ' + d.severity + '"><h4>' + esc(d.name) +
+            ' <span class="tier">' + d.severity + '</span></h4><p>' + esc(d.t) + '</p>' + dates + '</div>';
+        }).join('')
+      : '<div class="card"><p>None of Manglik, Kaal Sarpa, Sade Sati, Dhaiya or the Pitra indication ' +
+        'is present in this chart right now.</p></div>';
+  }
+
+  /* ---- vargas, ashtakavarga, shadbala --------------------------------- */
+  var currentVarga = 'D9';
+
+  function renderVargaView(chart) {
+    var J = window.Jyotish, dp = chart.deep;
+    $('vargaPick').innerHTML = J.VARGA_META.map(function (v) {
+      return '<button type="button" class="chip' + (v[0] === currentVarga ? ' on' : '') +
+             '" data-v="' + v[0] + '">' + v[0] + '</button>';
+    }).join('');
+    Array.prototype.forEach.call($('vargaPick').children, function (b) {
+      b.addEventListener('click', function () {
+        currentVarga = b.dataset.v;
+        Array.prototype.forEach.call($('vargaPick').children, function (x) {
+          x.classList.toggle('on', x.dataset.v === currentVarga);
+        });
+        drawVarga(chart);
+      });
+    });
+    drawVarga(chart);
+
+    var av = dp.av;
+    var rows = ['<tr><th>Rashi</th>' + J.SEVEN.map(function (p) {
+      return '<th>' + D.GRAHAS[p].sym + '</th>'; }).join('') + '<th>SAV</th></tr>'];
+    for (var i = 0; i < 12; i++) {
+      var sign = (chart.lagnaSign + i) % 12;
+      var sav = av.sav[sign];
+      rows.push('<tr><td class="g">' + (i + 1) + ' &middot; ' + esc(D.RASHIS[sign].n) + '</td>' +
+        J.SEVEN.map(function (p) { return '<td>' + av.bav[p][sign] + '</td>'; }).join('') +
+        '<td class="sav ' + (sav >= 30 ? 'hi' : sav <= 25 ? 'lo' : '') + '">' + sav + '</td></tr>');
+    }
+    $('avHost').innerHTML =
+      '<p class="lede sm">Bindus counted house by house from your lagna. The SAV column is the one ' +
+      'that matters: 28 is average, above 30 marks a house where transits actually produce results, ' +
+      'below 25 a house that stays hard work.</p>' +
+      '<div class="tscroll"><table class="grahas av-table">' + rows.join('') + '</table></div>' +
+      '<p class="foot lead-left">Column totals are the classical 48 / 49 / 39 / 54 / 56 / 52 / 39, summing to 337.</p>';
+
+    var bala = dp.bala;
+    var max = Math.max.apply(null, J.SEVEN.map(function (p) { return bala[p].ratio; }));
+    $('balaHost').innerHTML =
+      '<p class="lede sm">Six-fold strength against the minimum each graha needs. Above 1.00 it can ' +
+      'act on its own; below, it waits for a dasha or transit to carry it.</p>' +
+      J.SEVEN.map(function (p) {
+        var b = bala[p];
+        return '<div class="bala-row"><span class="bn">' + D.GRAHAS[p].sym + ' ' + esc(D.GRAHAS[p].dev) + '</span>' +
+          '<span class="btrack"><i style="width:' + Math.min(100, b.ratio / Math.max(max, 1.2) * 100).toFixed(1) +
+          '%;background:' + D.GRAHAS[p].color + '"></i></span>' +
+          '<span class="bv ' + (b.ratio >= 1 ? 'ok' : 'under') + '">' + b.ratio.toFixed(2) + '</span></div>';
+      }).join('') +
+      '<p class="foot lead-left">Sthana, Dig, Kala, Cheshta and Naisargika components are computed. ' +
+      'Drik bala is omitted: it is the component authorities disagree on most, and a wrong number ' +
+      'would be worse than an absent one.</p>';
+  }
+
+  function drawVarga(chart) {
+    var J = window.Jyotish;
+    var meta = J.VARGA_META.filter(function (m) { return m[0] === currentVarga; })[0];
+    var vc = J.vargaChart(chart, currentVarga);
+    var byHouse = {};
+    vc.planets.forEach(function (p) { (byHouse[p.house] = byHouse[p.house] || []).push(p); });
+    var svg = ['<svg class="kundli" viewBox="-4 -4 408 408" role="img" aria-label="' + currentVarga +
+               ' chart"><rect class="frame" x="0" y="0" width="400" height="400" rx="6"/>'];
+    for (var i = 0; i < 12; i++) {
+      var sign = (vc.lagnaSign + i) % 12, a = HOUSE_ANCHOR[i];
+      svg.push('<polygon class="cell' + (i === 0 ? ' lagna' : '') + '" points="' + HOUSE_POLY[i] + '"/>');
+      svg.push('<text class="hn" x="' + a[0] + '" y="' + (a[1] - 20) + '" text-anchor="middle">' + (sign + 1) + '</text>');
+      var occ = byHouse[i + 1] || [];
+      var top = a[1] - (occ.length - 1) * 6.5 + 4;
+      for (var j = 0; j < occ.length; j++) {
+        svg.push('<text class="pl" x="' + a[0] + '" y="' + (top + j * 13) +
+                 '" text-anchor="middle">' + ABBR[occ[j].name] + '</text>');
+      }
+    }
+    svg.push('</svg>');
+    $('vargaHost').innerHTML = svg.join('');
+    $('vargaNote').innerHTML = '<div class="card"><h4>' + esc(meta[0] + ' · ' + meta[1]) +
+      '</h4><p>Read for ' + esc(meta[2]) + '. The lagna of this varga falls in ' +
+      esc(D.RASHIS[vc.lagnaSign].n) + '.' +
+      (currentVarga === 'D9' && chart.deep.vargottama.length
+        ? ' Vargottama here: ' + chart.deep.vargottama.map(function (n) { return D.GRAHAS[n].dev; }).join(', ') +
+          ' — the same rashi in D-1 and D-9, the strongest confirmation a placement can get.'
+        : '') + '</p></div>';
   }
 
   function renderDasha(chart) {
@@ -501,7 +783,17 @@
       return '<li class="' + cls + '">' + e.t + '</li>';
     }).join('') + '</ul>');
     if (a.supportText) h.push('<div class="sub-block"><b>Supporting houses</b>' + a.supportText + '</div>');
-    h.push('<div class="sub-block"><b>Your daśā</b>' + a.dashaText + '</div>');
+    if (a.depth && a.depth.length) {
+      h.push('<div class="sub-block"><b>Navamsa, ashtakavarga and bala</b><ul class="tight">' +
+        a.depth.map(function (e) {
+          return '<li class="' + (e.w > 0.2 ? 'pos' : e.w < -0.2 ? 'neg' : '') + '">' + esc(e.t) + '</li>';
+        }).join('') + '</ul></div>');
+    }
+    if (a.doshaBits && a.doshaBits.length) {
+      h.push('<div class="sub-block"><b>Dosha bearing on this</b><ul class="tight">' +
+        a.doshaBits.map(function (e) { return '<li class="neg">' + esc(e.t) + '</li>'; }).join('') + '</ul></div>');
+    }
+    h.push('<div class="sub-block"><b>Your dasha</b>' + a.dashaText + '</div>');
     h.push('<div class="sub-block"><b>Transits right now</b>' + a.transitText + '</div>');
     h.push('<div class="sub-block"><b>Timing</b>' + a.timing + '</div>');
     if (a.remedy) {
@@ -567,8 +859,34 @@
       'Tithi and nakṣatra shown are for the current moment, not sunrise.</p>');
 
     $('monthHost').innerHTML = h.join('');
+    renderMuhurtas(chart);
 
     function pc(k, v) { return '<div><div class="k">' + esc(k) + '</div><div class="v">' + esc(v) + '</div></div>'; }
+  }
+
+  function renderMuhurtas(chart) {
+    var now = new Date();
+    // Today's timings belong to today's clock, not the birth-era one: a 1943
+    // birth is cast on UTC+6:30, but this morning's sunrise is still +5:30.
+    var todayTz = chart.birth.india
+      ? A.indiaOffset(now.getFullYear(), now.getMonth() + 1, now.getDate())
+      : chart.birth.tz;
+    var mu = window.Jyotish.muhurtas(now.getFullYear(), now.getMonth() + 1, now.getDate(),
+                                     chart.birth.lat, chart.birth.lon, todayTz);
+    if (!mu) { $('muhurtaHead').hidden = true; $('muhurtaHost').innerHTML = ''; return; }
+    $('muhurtaHead').hidden = false;
+    var tz = todayTz;
+    function hm(jd) { var d = A.fromJD(jd + tz / 24); return pad2(d.h) + ':' + pad2(d.mi); }
+    function span(s) { return hm(s.start) + ' – ' + hm(s.end); }
+    function kv(k, v) { return '<div><div class="k">' + esc(k) + '</div><div class="v">' + v + '</div></div>'; }
+    $('muhurtaHost').innerHTML = '<div class="pan-grid">' +
+      kv('Sunrise', hm(mu.sunrise)) + kv('Sunset', hm(mu.sunset)) +
+      kv('Rahu kaal', span(mu.rahuKaal)) + kv('Yamaganda', span(mu.yamaganda)) +
+      kv('Gulika kaal', span(mu.gulika)) +
+      kv('Abhijit', mu.abhijit.valid ? span(mu.abhijit) : 'not observed on Wednesday') +
+      '</div><p class="foot lead-left">Computed for your birth place (' + esc(chart.birth.place) +
+      ') and its time zone. Rahu kaal, Yamaganda and Gulika are the eighth-parts of the day ' +
+      'traditionally avoided for beginnings; Abhijit is the reliably auspicious window near local noon.</p>';
   }
 
   function dayLine(m) { return function (d) {
@@ -761,6 +1079,7 @@
       $('fLat').value = b.lat; $('fLon').value = b.lon;
       fPlace.value = b.place || '';
       if (!b.timeKnown) { $('fNoTime').checked = true; $('fTime').disabled = true; }
+      pickedIsIndia = !!b.india;
       launch(b);
     } catch (e) {}
   })();

@@ -312,6 +312,65 @@
     return jd + 30;
   }
 
+  /* ---------- solar rise / set / transit -------------------------------- */
+
+  function sunRA(jd) {
+    var lam = sunLongitude(jd), eps = meanObliquity(centuries(jd));
+    return norm360(Math.atan2(cosd(eps) * sind(lam), cosd(lam)) * R2D);
+  }
+  function sunDec(jd) {
+    var lam = sunLongitude(jd), eps = meanObliquity(centuries(jd));
+    return Math.asin(sind(eps) * sind(lam)) * R2D;
+  }
+
+  // local apparent noon nearest jdApprox
+  function solarTransit(jdApprox, lonEast) {
+    var t = jdApprox;
+    for (var i = 0; i < 4; i++) {
+      var ha = norm180(gmst(t) + lonEast - sunRA(t));
+      t -= ha / 360.985647;
+    }
+    return t;
+  }
+
+  /* Rise/set for a local calendar date.
+     alt = -0.8333 deg gives the conventional sunrise (upper limb + refraction).
+     Returns { rise, set, transit } as JD, with null where the Sun does not
+     cross that altitude (polar day or night). */
+  function sunRiseSet(y, m, d, lat, lonEast, tzHours, alt) {
+    if (alt === undefined) alt = -0.8333;
+    var noonLocalUT = toJD(y, m, d, 12, 0, 0) - tzHours / 24;
+    var transit = solarTransit(noonLocalUT, lonEast);
+
+    function hourAngle(t) {
+      var dec = sunDec(t);
+      var c = (sind(alt) - sind(lat) * sind(dec)) / (cosd(lat) * cosd(dec));
+      return (c > 1 || c < -1) ? null : Math.acos(c) * R2D;
+    }
+    var H = hourAngle(transit);
+    if (H === null) return { rise: null, set: null, transit: transit, circumpolar: true };
+
+    // one refinement pass at the approximate rise/set instants
+    var rise = transit - H / 360.985647, set = transit + H / 360.985647;
+    var Hr = hourAngle(rise), Hs = hourAngle(set);
+    if (Hr !== null) rise = transit - Hr / 360.985647;
+    if (Hs !== null) set = transit + Hs / 360.985647;
+    return { rise: rise, set: set, transit: transit, circumpolar: false };
+  }
+
+  /* ---------- India's actual clock history ------------------------------ */
+  /* Indian Standard Time is +5:30 today, but births before 1906 and during
+     the Second World War were recorded on a different offset. Getting this
+     wrong shifts the lagna by up to a whole rashi. Source: IANA tzdata
+     Asia/Kolkata. */
+  function indiaOffset(y, m, d) {
+    var t = y * 10000 + m * 100 + d;
+    if (t < 19060101) return 5 + 21 / 60 + 10 / 3600;   // Madras Mean Time
+    if (t >= 19411001 && t < 19420515) return 6.5;       // wartime advance
+    if (t >= 19420901 && t < 19451015) return 6.5;       // wartime advance
+    return 5.5;
+  }
+
   // December solstice of a given year (Sun tropical longitude = 270)
   function decemberSolstice(year) {
     var f = function (t) { return norm180(sunLongitude(t) - 270); };
@@ -331,6 +390,8 @@
     isRetrograde: isRetrograde, dailySpeed: dailySpeed,
     gmst: gmst, ascendantTropical: ascendantTropical, ascendantSidereal: ascendantSidereal,
     midheavenTropical: midheavenTropical,
+    sunRA: sunRA, sunDec: sunDec, solarTransit: solarTransit,
+    sunRiseSet: sunRiseSet, indiaOffset: indiaOffset,
     bisect: bisect, lastNewMoon: lastNewMoon, nextNewMoon: nextNewMoon,
     nextFullMoon: nextFullMoon, decemberSolstice: decemberSolstice,
     BODY_ORDER: BODY_ORDER

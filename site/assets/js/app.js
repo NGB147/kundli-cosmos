@@ -831,7 +831,8 @@
            '<span class="pill ' + a.verdict.cls + '">' + a.verdict.label + '</span></div>');
     if (a.question) {
       h.push('<div class="sub-block"><b>You asked</b>“' + esc(a.question) + '”' +
-        (a.usedDetection ? ' — read against ' + esc(a.domain.subject) + '.' : '') + '</div>');
+        (a.usedDetection ? ' — read against ' + esc(a.domain.subject) + '.' : '') +
+        (a.fellBack ? ' <em>I could not tell which area of life this is about, so it is read as a question of timing. Tap an area above for a sharper answer.</em>' : '') + '</div>');
     }
 
     /* --- the short answer, first, with real dates --- */

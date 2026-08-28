@@ -363,9 +363,9 @@
   function answerQuestion(chart, domainId, questionText, jdNow) {
     var dom = D.DOMAINS.filter(function (x) { return x.id === domainId; })[0];
     var detected = detectDomain(questionText);
-    var usedDetection = false;
+    var usedDetection = false, fellBack = false;
     if (!dom && detected) { dom = detected; usedDetection = true; }
-    if (!dom) dom = D.DOMAINS[7];
+    if (!dom) { dom = D.DOMAINS[7]; fellBack = true; }   // nothing recognised
 
     var primary = evaluateHouse(chart, dom.houses[0], dom.karakas, jdNow);
     var support = dom.houses.slice(1).map(function (hn) {
@@ -402,7 +402,7 @@
     }, null);
 
     return {
-      domain: dom, usedDetection: usedDetection, question: questionText || '',
+      domain: dom, usedDetection: usedDetection, fellBack: fellBack, question: questionText || '',
       verdict: b, score: total,
       summary: summary,
       opener: OPENERS[dom.id][b.key],

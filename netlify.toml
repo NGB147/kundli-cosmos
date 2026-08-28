@@ -9,7 +9,7 @@
     Referrer-Policy = "no-referrer"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
 
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=3600"
+# Asset filenames are not content-hashed, so they must revalidate on every
+# load. Netlify's default (max-age=0, must-revalidate + ETag) does exactly
+# that and stays cheap; an explicit max-age here would serve stale JS to
+# returning visitors after a deploy.

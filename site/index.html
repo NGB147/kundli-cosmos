@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#02010a">
-<meta name="description" content="Build your Vedic kundli from real sidereal planetary positions, ask three questions answered from your own chart, and get a monthly reading that blends the Hindu panchang, the Chinese zodiac and the Western calendar.">
+<meta name="theme-color" content="#0a0614">
+<meta name="description" content="Your Vedic kundli computed live from real planetary positions, with numerology, Western astrology, Chinese Four Pillars, tarot birth cards and Ayurvedic constitution — and plain-English answers to your questions with real dates.">
 <title>Jyotish Darpan — Your Kundli, Your Questions, Your Month</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,15 +26,39 @@
 <!-- ============ gate ============ -->
 <div id="gate">
   <form class="gate-inner" id="birthForm" autocomplete="off" novalidate>
-    <div class="eyebrow">Sidereal Vedic astrology · computed live</div>
+    <div class="eyebrow">Vedic · Western · Chinese · Numerology — one birth moment</div>
     <h1 class="grad">Jyotish<br>Darpan</h1>
-    <p class="sub">The mirror of the sky. Give the moment you arrived, and the planets are calculated
-      from scratch — no lookup tables, no generic sun-sign paragraphs.</p>
+    <p class="sub">The mirror of the sky. Give the moment you arrived, and every system is computed
+      from scratch — and explained in plain words.</p>
+
+    <div class="section-h small">Who you are</div>
 
     <div class="field">
-      <label for="fName">Your name</label>
-      <input type="text" id="fName" placeholder="So the chart knows who it belongs to" maxlength="40">
+      <label for="fFullName">Full name at birth</label>
+      <input type="text" id="fFullName" placeholder="Exactly as on your birth certificate" maxlength="80">
+      <p class="field-hint">Numerology reads the letters of the name you were given — Expression,
+        Soul Urge and Personality all come from this.</p>
     </div>
+
+    <div class="field">
+      <label for="fName">Name you go by now <span class="opt">optional</span></label>
+      <input type="text" id="fName" placeholder="If different — a nickname, a changed name" maxlength="60">
+      <p class="field-hint">Used for the Chaldean name number and for addressing you. Leave blank to
+        use your birth name.</p>
+    </div>
+
+    <div class="field">
+      <label for="fGender">Gender <span class="opt">optional</span></label>
+      <select id="fGender">
+        <option value="">Prefer not to say</option>
+        <option value="female">Female</option>
+        <option value="male">Male</option>
+      </select>
+      <p class="field-hint">Only the Feng Shui Kua number uses this — it is defined differently
+        for men and women. Nothing else does.</p>
+    </div>
+
+    <div class="section-h small">When and where</div>
 
     <div class="field">
       <label for="fDate">Date of birth</label>
@@ -56,8 +80,9 @@
 
     <label class="check">
       <input type="checkbox" id="fNoTime">
-      <span>I don’t know my birth time. Use noon — the Moon, nakshatra and dasha stay close,
-        but the lagna (ascendant) and house positions will be unreliable, and I’ll be told so.</span>
+      <span>I don’t know my birth time. Use noon — Moon sign, numerology and the Chinese year
+        stay right, but the rising sign, houses and the Chinese hour pillar will be unreliable,
+        and I’ll be told so.</span>
     </label>
 
     <div class="field">
@@ -80,7 +105,7 @@
     </div>
 
     <div class="err" id="gateErr" role="alert"></div>
-    <button type="submit" class="btn">Cast my kundli</button>
+    <button type="submit" class="btn">Cast my chart</button>
     <p class="hint">Everything is computed in your browser. Nothing is uploaded,
       stored on a server, or shared. Your details stay on this device.</p>
   </form>
@@ -100,47 +125,58 @@
     </div>
   </header>
 
-  <!-- ---- kundli ---- -->
-  <div class="scroll view" id="viewChart">
+  <!-- ---- overview ---- -->
+  <div class="scroll view" id="viewOverview">
     <div class="wrap pad-top pad-bot">
+      <div id="timeWarn"></div>
+      <div class="ov-grid" id="ovGrid"></div>
+      <div class="section-h">You, at a glance</div>
+      <div id="ovPortrait"></div>
+      <div class="section-h">Where you are in life right now</div>
+      <div id="ovNow"></div>
+      <div class="section-h">Your strengths</div>
+      <div id="yogaHost"></div>
+      <div class="section-h">Things to be aware of</div>
+      <div id="doshaHost"></div>
+      <div class="section-h">What the chart says first</div>
+      <div id="chartNotes"></div>
+      <button type="button" class="btn ghost" id="btnSky">✦ &nbsp;Explore your sky</button>
+      <p class="foot">Vedic positions are sidereal (Lahiri). Western positions are tropical.<br>
+        Both come from the same computed sky; they differ by the ayanāṁśa, ~24°.</p>
+    </div>
+  </div>
+
+  <!-- ---- chart ---- -->
+  <div class="scroll view" id="viewChart" hidden>
+    <div class="wrap pad-top pad-bot">
+      <div class="section-h">Your birth chart</div>
+      <p class="lede sm">The North Indian rāśi chart. House 1 is the diamond at the top; the number
+        in each house is its sign, and the two-letter codes are the planets sitting there.</p>
       <div class="chart-wrap" id="chartHost"></div>
       <div class="chart-key">
         <span>North Indian · Rāśi (D‑1)</span><span>Whole‑sign houses</span><span>Lahiri ayanāṁśa</span>
       </div>
-      <div id="timeWarn"></div>
       <div class="big3" id="big3"></div>
-      <div class="section-h">The nine grahas</div>
+      <div class="section-h">The nine planets</div>
       <div class="tscroll"><table class="grahas" id="grahaTable"></table></div>
-      <div class="section-h">Vimśottarī daśā</div>
+      <div class="section-h">Life chapters (Vimśottarī daśā)</div>
       <div id="dashaHost"></div>
       <div class="section-h">Bhāva chalit — the real house cusps</div>
       <div id="chalitHost"></div>
-      <div class="section-h">Avakhaḍa chakra</div>
+      <div class="section-h">Matching attributes (Avakhaḍa chakra)</div>
       <div id="avakhada"></div>
-      <div class="section-h">Yogas in your chart</div>
-      <div id="yogaHost"></div>
-      <div class="section-h">Doṣas</div>
-      <div id="doshaHost"></div>
-      <div class="section-h">What the chart says first</div>
-      <div id="chartNotes"></div>
-      <p class="foot">Positions are sidereal (nirayana), Lahiri ayanāṁśa, computed from<br>
-        Meeus solar–lunar theory and JPL planetary elements.</p>
-    </div>
-  </div>
-
-  <!-- ---- divisional charts, ashtakavarga, bala ---- -->
-  <div class="scroll view" id="viewVarga" hidden>
-    <div class="wrap pad-top pad-bot">
       <div class="section-h">Divisional charts (vargas)</div>
-      <p class="lede">The D-1 shows the event; the vargas show whether it holds. Navāṁśa (D-9) is the
-        one every astrologer checks second.</p>
+      <p class="lede sm">The main chart shows the event; the vargas show whether it holds. D-9 is
+        the one every astrologer checks second.</p>
       <div class="varga-pick" id="vargaPick"></div>
       <div class="chart-wrap" id="vargaHost"></div>
       <div id="vargaNote"></div>
-      <div class="section-h">Aṣṭakavarga</div>
+      <div class="section-h">Support scores (Aṣṭakavarga)</div>
       <div id="avHost"></div>
-      <div class="section-h">Ṣaḍbala</div>
+      <div class="section-h">Planet strength (Ṣaḍbala)</div>
       <div id="balaHost"></div>
+      <p class="foot">Positions computed from Meeus solar–lunar theory and JPL planetary elements,<br>
+        on Terrestrial Time, with Lahiri ayanāṁśa.</p>
     </div>
   </div>
 
@@ -148,8 +184,8 @@
   <div class="scroll view" id="viewAsk" hidden>
     <div class="wrap pad-top pad-bot">
       <div class="section-h">Ask the chart</div>
-      <p class="lede">Three questions. Pick the area of life, say it in your own words, and the answer is
-        built from your actual house lords, their dignity, your running daśā and today’s transits.</p>
+      <p class="lede">Three questions. Pick the area of life, say it in your own words, and you get a
+        plain answer with real dates — and the full working underneath if you want it.</p>
       <div class="qcount" id="qCount"></div>
       <div id="qHost"></div>
       <p class="foot">Answers are deterministic: the same chart and the same question<br>
@@ -161,26 +197,45 @@
   <div class="scroll view" id="viewMonth" hidden>
     <div class="wrap pad-top pad-bot">
       <div id="monthHost"><div class="spinner">Reading the sky…</div></div>
-      <div class="section-h" id="muhurtaHead" hidden>Today’s muhūrtas</div>
+      <div class="section-h" id="muhurtaHead" hidden>Today’s timings</div>
       <div id="muhurtaHost"></div>
     </div>
   </div>
 
-  <!-- ---- sky ---- -->
+  <!-- ---- systems ---- -->
+  <div class="scroll view" id="viewSystems" hidden>
+    <div class="wrap pad-top pad-bot">
+      <div class="section-h">Numerology</div>
+      <div id="numHost"></div>
+      <div class="section-h">Western astrology</div>
+      <div id="westHost"></div>
+      <div class="section-h">Chinese Four Pillars (BaZi)</div>
+      <div id="baziHost"></div>
+      <div class="section-h">Tarot birth cards</div>
+      <div id="tarotHost"></div>
+      <div class="section-h">Ayurvedic constitution</div>
+      <div id="ayurHost"></div>
+      <p class="foot">Each of these reads the same birth moment through a different tradition.<br>
+        Where they agree, take it seriously. Where they differ, that is information too.</p>
+    </div>
+  </div>
+
+  <!-- ---- sky (opened from the overview) ---- -->
   <div class="view" id="viewSky" hidden>
     <div id="skyView">
       <div id="constellations"></div>
-      <div class="sky-note">Drag to drift through the wheel · tap any rāśi<br>
+      <button type="button" class="sky-close" id="btnSkyClose">× &nbsp;Back</button>
+      <div class="sky-note">Drag to drift through the wheel · tap any sign<br>
         <span id="skyLegend"></span></div>
     </div>
   </div>
 
   <nav id="nav">
-    <button type="button" data-view="viewChart" class="on"><span class="ic">◈</span><span class="tx">Kundli</span></button>
-    <button type="button" data-view="viewVarga"><span class="ic">⊞</span><span class="tx">Vargas</span></button>
+    <button type="button" data-view="viewOverview" class="on"><span class="ic">◈</span><span class="tx">Overview</span></button>
+    <button type="button" data-view="viewChart"><span class="ic">⊞</span><span class="tx">Chart</span></button>
     <button type="button" data-view="viewAsk"><span class="ic">✧</span><span class="tx">Ask</span></button>
-    <button type="button" data-view="viewMonth"><span class="ic">☾</span><span class="tx">This Month</span></button>
-    <button type="button" data-view="viewSky"><span class="ic">✦</span><span class="tx">Sky</span></button>
+    <button type="button" data-view="viewMonth"><span class="ic">☾</span><span class="tx">Month</span></button>
+    <button type="button" data-view="viewSystems"><span class="ic">⚭</span><span class="tx">Systems</span></button>
   </nav>
 </div>
 
@@ -195,6 +250,8 @@
 <script src="assets/js/geo-top.js"></script>
 <script src="assets/js/kundli.js"></script>
 <script src="assets/js/jyotish.js"></script>
+<script src="assets/js/numerology.js"></script>
+<script src="assets/js/systems.js"></script>
 <script src="assets/js/forecast.js"></script>
 <script src="assets/js/plainspeak.js"></script>
 <script src="assets/js/reading.js"></script>

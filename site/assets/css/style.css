@@ -371,6 +371,66 @@ ul.plainlist.do li::before{content:"→";color:var(--gold);}
 .details-toggle:active{background:rgba(74,54,112,.3);}
 .details-body[hidden]{display:none;}
 
+/* ---------- overview dashboard ----------------------------------------- */
+.ov-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:4px;}
+.ov{border:1px solid var(--line);border-radius:15px;padding:13px 13px 12px;background:rgba(20,12,38,.62);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);min-height:86px;}
+.ov.gold{border-color:rgba(247,214,117,.4);background:linear-gradient(160deg,rgba(247,214,117,.10),rgba(20,12,38,.62) 70%);}
+.ov .k{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-dim);}
+.ov .v{font-size:21px;line-height:1.15;color:var(--star);margin-top:6px;font-weight:600;}
+.ov .s{font-size:12.5px;color:var(--ink-dim);margin-top:4px;line-height:1.4;}
+.card.portrait p{font-size:16.5px;line-height:1.65;color:var(--star);}
+.card.portrait p + p{margin-top:11px;}
+.card p b.gold,b.gold{color:var(--gold);font-weight:600;}
+.card p.now{color:var(--star);}
+.card p.what{font-size:14px;color:var(--ink-dim);margin-top:8px;line-height:1.55;}
+.section-h.small{font-size:9.5px;margin:26px 0 4px;color:var(--gold-dim);}
+.section-h.sub{font-size:10px;margin:22px 0 10px;color:var(--gold-dim);}
+.field label .opt{font-size:8px;color:var(--ink-dim);margin-left:6px;letter-spacing:.1em;}
+.field select{background-color:rgba(10,6,20,.8);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23c9a94e'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 15px center;padding-right:36px;}
+.field select option{background:var(--panel);color:var(--star);}
+
+/* numerology cards */
+.card.num .nh{display:flex;align-items:center;gap:13px;margin-bottom:9px;}
+.card.num .big{font-size:38px;line-height:1;color:var(--gold);font-weight:600;min-width:46px;}
+.card.num .lab b{display:block;font-size:17px;color:var(--star);font-weight:600;}
+.card.num .lab em{display:block;font-style:normal;font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-dim);margin-top:2px;}
+.pan-grid.three{grid-template-columns:repeat(3,1fr);}
+.pan-grid .s{font-size:12.5px;color:var(--ink-dim);margin-top:4px;line-height:1.45;}
+.loshu{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:260px;margin:8px 0 12px;}
+.loshu .cell{aspect-ratio:1;border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;background:rgba(10,6,20,.5);}
+.loshu .cell.on{border-color:var(--gold-dim);background:rgba(247,214,117,.09);}
+.loshu .cell .d{font-family:var(--mono);font-size:9px;color:var(--ink-dim);}
+.loshu .cell .c{font-size:17px;color:var(--gold);margin-top:2px;letter-spacing:.1em;}
+.loshu .cell:not(.on) .c{color:var(--line2);}
+
+/* tarot */
+.tarot-row{display:flex;gap:10px;flex-wrap:wrap;}
+.card.tcard{flex:1;min-width:150px;text-align:center;margin-bottom:0;}
+.tcard .tn{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--gold-dim);}
+.tcard .tname{font-size:22px;color:var(--gold);font-weight:600;margin-top:5px;}
+.tcard .tkey{font-size:14px;color:var(--star);margin-top:6px;font-style:italic;}
+.tcard .trole{font-size:12px;color:var(--ink-dim);margin-top:8px;line-height:1.45;}
+
+/* bazi table */
+table.bazi td{text-align:center;vertical-align:top;line-height:1.35;}
+table.bazi td small{font-size:11px;color:var(--ink-dim);}
+table.bazi td small.dim{font-style:italic;}
+table.bazi td b{color:var(--gold);font-weight:600;font-size:15px;}
+
+/* sky back button */
+.sky-close{position:absolute;top:calc(env(safe-area-inset-top) + 14px);left:16px;z-index:3;
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);
+  border:1px solid var(--line2);padding:9px 14px;border-radius:30px;background:rgba(10,6,20,.7);}
+
+@media (min-width:620px){
+  .ov-grid{grid-template-columns:repeat(4,1fr);}
+}
+
 /* ---------- gate extras ------------------------------------------------ */
 .tz-note{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--cyan);
   margin-top:8px;text-align:left;line-height:1.6;}

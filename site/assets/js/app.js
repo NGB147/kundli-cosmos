@@ -332,8 +332,13 @@
     var tz = parseNum($('fTz').value);
     if (tz === null || tz < -12 || tz > 14) { err.textContent = 'UTC offset must be between -12 and +14 (India is +5.5).'; return; }
 
+    var fullName = ($('fFullName').value || '').trim();
+    var usedName = ($('fName').value || '').trim();
+    if (!fullName && !usedName) { err.textContent = 'Please give at least your name at birth — numerology reads its letters.'; return; }
     var birth = {
-      name: ($('fName').value || '').trim() || 'Traveller',
+      name: usedName || fullName.split(/\s+/)[0] || 'Traveller',
+      fullName: fullName || usedName, usedName: usedName,
+      gender: $('fGender').value || '',
       y:y, m:m, d:d, hh:hh, mm:mm, tz:tz, lat:lat, lon:lon,
       place: fPlace.value.trim() || (lat.toFixed(2) + ', ' + lon.toFixed(2)),
       india: pickedIsIndia,
@@ -379,12 +384,14 @@
     renderVargaView(chart);
     renderAsk(chart);
     renderSky(chart);
-    show('viewChart');
+    renderSystems(chart);
+    renderOverview(chart);
+    show('viewOverview');
     setTimeout(function () { renderMonth(chart); }, 60);
   }
 
   function show(id) {
-    ['viewChart','viewVarga','viewAsk','viewMonth','viewSky'].forEach(function (v) {
+    ['viewOverview','viewChart','viewAsk','viewMonth','viewSystems','viewSky'].forEach(function (v) {
       $(v).hidden = (v !== id);
     });
     Array.prototype.forEach.call($('nav').children, function (b) {
@@ -394,6 +401,8 @@
   Array.prototype.forEach.call($('nav').children, function (b) {
     b.addEventListener('click', function () { show(b.dataset.view); });
   });
+  $('btnSky').addEventListener('click', function () { show('viewSky'); });
+  $('btnSkyClose').addEventListener('click', function () { show('viewOverview'); });
 
   /* =========================================================================
      4. the kundli view
@@ -1122,6 +1131,233 @@
   }
   $('sheetClose').addEventListener('click', function () { $('sheet').classList.remove('open'); });
 
+
+  /* =========================================================================
+     7b. overview dashboard
+  ========================================================================= */
+  function renderOverview(chart) {
+    var b = chart.birth, jd = nowJD(), now = A.fromJD(jd);
+    var N = window.Numerology, S = window.Systems, P = window.Plainspeak;
+    var num = N.core(b, b.fullName || b.name, b.usedName || b.fullName || b.name, now);
+    var west = S.western(chart), fp = S.fourPillars(b), ay = S.ayurveda(chart);
+    var tarot = N.tarotBirthCards(b);
+    state.num = num;
+    state.sys = { west: west, fp: fp, ay: ay, tarot: tarot };
+
+    var cur = K.dashaAt(chart.dasha, jd);
+    var lagna = D.RASHIS[chart.lagnaSign], moon = D.RASHIS[chart.moonSign], sun = D.RASHIS[chart.sunSign];
+    function pn(name) { return P.PLANET[name].b || P.PLANET[name].n; }
+    function card(k, v, sub, cls) {
+      return '<div class="ov' + (cls ? ' ' + cls : '') + '"><div class="k">' + esc(k) + '</div>' +
+             '<div class="v">' + esc(v) + '</div>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>';
+    }
+    var ae = cur ? A.fromJD(cur.antar.end) : null;
+    $('ovGrid').innerHTML =
+      card('Rising sign', lagna.n, lagna.w + ' · ' + chart.lagnaDeg + (chart.timeKnown ? '' : ' · unverified'), 'gold') +
+      card('Moon sign', moon.n, D.NAKSHATRAS[chart.moonNak].n + ' · pada ' + chart.moonPada, 'gold') +
+      card('Sun sign', sun.n, 'Western: ' + west.sun) +
+      card('Life chapter now', cur ? pn(cur.maha.lord) : '—',
+           cur ? 'with ' + pn(cur.antar.lord) + ' until ' + MONTHS[ae.m - 1] + ' ' + ae.y : '') +
+      card('Life path', String(num.lifePath), N.MEAN[num.lifePath].key) +
+      card('Chinese sign', fp.base.element.n + ' ' + fp.base.animal.n, 'day master ' + fp.dayMaster) +
+      card('Birth card', tarot[0].name, tarot[1] ? 'with ' + tarot[1].name : tarot[0].key) +
+      card('Constitution', ay.primary.n, ay.primary.el);
+
+    // --- the portrait: plain synthesis across systems ---
+    var real = chart.planets.filter(function (p) { return p.name !== 'Rahu' && p.name !== 'Ketu'; })
+      .slice().sort(function (a, b2) { return b2.dignity.score - a.dignity.score; });
+    var best = real[0], worst = real[real.length - 1];
+    var por = [];
+    por.push('People meet your ' + lagna.n + ' rising first — ' + lagna.traits.slice(0, 3).join(', ').toLowerCase() +
+      '. ' + lagna.tag);
+    por.push('Underneath that, your Moon — the mind and its moods — sits in ' + moon.n + '. ' + moon.tag +
+      ' That is the part of you that only people close to you see.');
+    por.push('Your strongest planet is ' + P.PLANET[best.name].n + ', ' + P.DIG_SHORT[best.dignity.label] +
+      ' in your ' + P.HOUSE_SHORT[best.house] + ' area — lean on ' + P.PLANET[best.name].role +
+      ' when a decision is hard. The one that asks the most work is ' + P.PLANET[worst.name].n +
+      ' (' + P.DIG_SHORT[worst.dignity.label] + '), which governs ' + P.PLANET[worst.name].role + '.');
+    por.push('Western astrology reads you as ' + west.dominantElement.toLowerCase() + '-dominant: you ' +
+      west.elementText + '. With a ' + west.dominantModality.toLowerCase() + ' emphasis, you are someone who ' +
+      west.modalityText + '.');
+    por.push('Numerology calls a life path ' + num.lifePath + ' "' + N.MEAN[num.lifePath].key + '": ' +
+      N.MEAN[num.lifePath].t);
+    $('ovPortrait').innerHTML = '<div class="card portrait">' +
+      por.map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('') + '</div>';
+
+    // --- where you are now ---
+    var nowBits = [];
+    if (cur) {
+      var owns = [];
+      chart.houses.forEach(function (h) { if (h.lord === cur.maha.lord) owns.push(P.HOUSE_SHORT[h.num]); });
+      nowBits.push({ k: 'Life chapter', v: pn(cur.maha.lord) + ' chapter, ' + pn(cur.antar.lord) + ' phase',
+        t: 'Long chapters are named after planets. This ' + pn(cur.maha.lord) + ' chapter runs ' +
+           A.fromJD(cur.maha.start).y + '–' + A.fromJD(cur.maha.end).y +
+           (owns.length ? ' and, because ' + P.PLANET[cur.maha.lord].n + ' runs your ' + owns.join(' and ') +
+             ' area' + (owns.length > 1 ? 's' : '') + ', that is where its themes land.' : '.') +
+           ' The current ' + pn(cur.antar.lord) + ' phase inside it ends ' + MONTHS[ae.m - 1] + ' ' + ae.y + '.' });
+    }
+    nowBits.push({ k: 'Personal year ' + num.personalYear, v: N.PERSONAL_YEAR[num.personalYear] || '',
+      t: 'Numerology runs in nine-year cycles from your birthday. ' + now.y + ' is ' +
+         (N.PERSONAL_YEAR[num.personalYear] || 'a transition year') + '. This month is a personal ' +
+         num.personalMonth + ', today a personal ' + num.personalDay + '.' });
+    var nowCn = K.chinesePillars(now.y, now.m, now.d, 12, 0, b.tz);
+    var rel = K.animalRelation(fp.base.animalIdx, nowCn.animalIdx);
+    nowBits.push({ k: 'Chinese year', v: nowCn.element.n + ' ' + nowCn.animal.n + ' vs your ' + fp.base.animal.n,
+      t: 'This is ' + rel.t + '.' });
+    var sade = (chart.deep.doshas || []).filter(function (d) { return d.key === 'sadesati' || d.key === 'dhaiya'; })[0];
+    if (sade) nowBits.push({ k: sade.key === 'sadesati' ? 'Saturn’s long pass' : 'Saturn’s short pass',
+      v: sade.name.replace(/ - /, ' — '), t: sade.t });
+    var pinn = num.pinnacles[num.pinnacleNow], pa = num.pinnacleAges[num.pinnacleNow];
+    nowBits.push({ k: 'Pinnacle ' + (num.pinnacleNow + 1) + ' of 4', v: 'number ' + pinn + ' — ' + N.MEAN[pinn].key,
+      t: 'Numerology divides a life into four pinnacles. You are in the ' + ['first','second','third','fourth'][num.pinnacleNow] +
+         ' (ages ' + pa[0] + (pa[1] >= 200 ? '+' : '–' + pa[1]) + '), whose theme is ' + N.MEAN[pinn].t.toLowerCase() });
+    $('ovNow').innerHTML = nowBits.map(function (x) {
+      return '<div class="card"><h4>' + esc(x.k) + '</h4><p><b class="gold">' + esc(x.v) + '</b></p><p>' + esc(x.t) + '</p></div>';
+    }).join('');
+  }
+
+  /* =========================================================================
+     7c. the other systems
+  ========================================================================= */
+  function renderSystems(chart) {
+    var b = chart.birth, now = A.fromJD(nowJD());
+    var N = window.Numerology, S = window.Systems;
+    var num = N.core(b, b.fullName || b.name, b.usedName || b.fullName || b.name, now);
+    var west = S.western(chart), fp = S.fourPillars(b), ay = S.ayurveda(chart);
+    var tarot = N.tarotBirthCards(b), kua = N.kua(b, b.gender);
+
+    function kv(k, v, sub) {
+      return '<div><div class="k">' + esc(k) + '</div><div class="v">' + esc(v) + '</div>' +
+             (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>';
+    }
+    function numCard(label, n, from, what) {
+      var m = N.MEAN[n] || N.MEAN[N.reduceHard(n)];
+      return '<div class="card num"><div class="nh"><span class="big">' + n + '</span>' +
+        '<span class="lab"><b>' + esc(label) + '</b><em>' + esc(from) + '</em></span></div>' +
+        '<p><b class="gold">' + esc(m.key) + '.</b> ' + esc(m.t) + '</p>' +
+        '<p class="what">' + esc(what) + '</p></div>';
+    }
+
+    /* ---- numerology ---- */
+    var h = [];
+    h.push('<p class="lede sm">Read from <b>' + esc(num.words.join(' ')) + '</b> and ' + fmtDate(b) +
+      '. Pythagorean letters, master numbers 11, 22 and 33 kept.</p>');
+    h.push(numCard('Life path', num.lifePath, 'from your birth date', 'The road you are on — the central lesson and the natural direction of a life. The number most numerologists read first.'));
+    h.push(numCard('Expression', num.expression, 'from every letter of your birth name', 'What you are equipped to do — talents and the shape of your work when you are being yourself.'));
+    h.push(numCard('Soul urge', num.soulUrge, 'from the vowels', 'What you actually want underneath what you say you want. The private motive.'));
+    h.push(numCard('Personality', num.personality, 'from the consonants', 'How you come across before people know you — the outer manner, the first impression.'));
+    h.push(numCard('Birthday', num.birthday, 'from the day of the month', 'A specific talent you carry; a minor number, but a precise one.'));
+    h.push(numCard('Maturity', num.maturity, 'life path + expression', 'What the second half of life turns toward, usually from your mid-forties on.'));
+
+    h.push('<div class="section-h sub">Cycles and timing</div>');
+    h.push('<div class="pan-grid three">' +
+      kv('Personal year', String(num.personalYear), N.PERSONAL_YEAR[num.personalYear] || '') +
+      kv('Personal month', String(num.personalMonth), 'the year’s theme, this month') +
+      kv('Personal day', String(num.personalDay), 'today') + '</div>');
+    h.push('<div class="card"><h4>Pinnacles — the four seasons of a life</h4>' +
+      num.pinnacles.map(function (p, i) {
+        var a = num.pinnacleAges[i];
+        return '<p class="' + (i === num.pinnacleNow ? 'now' : '') + '"><b class="gold">' + (i + 1) + '. Ages ' + a[0] +
+          (a[1] >= 200 ? '+' : '–' + a[1]) + ' — number ' + p + '</b> (' + esc(N.MEAN[p].key) + ')' +
+          (i === num.pinnacleNow ? ' ← you are here' : '') + '</p>';
+      }).join('') + '</div>');
+    h.push('<div class="card"><h4>Challenges — what each season asks you to learn</h4>' +
+      num.challenges.map(function (c, i) {
+        return '<p><b class="gold">' + (i + 1) + '.</b> ' + esc(N.CHALLENGE[c] || '') + (i === num.pinnacleNow ? ' ← current' : '') + '</p>';
+      }).join('') + '</div>');
+
+    h.push('<div class="section-h sub">The letters of your name</div>');
+    h.push('<div class="pan-grid">' +
+      kv('Hidden passion', String(num.hiddenPassion), 'the number that appears most in your name: ' + N.MEAN[num.hiddenPassion].key) +
+      kv('Karmic lessons', num.lessons.length ? num.lessons.join(', ') : 'none', num.lessons.length ? 'numbers absent from your name — the things life will teach by circumstance' : 'every number is present in your name') +
+      kv('Karmic debt', num.karmicDebt.length ? num.karmicDebt.join(', ') : 'none', num.karmicDebt.length ? 'a raw sum hit 13, 14, 16 or 19 — a pattern to be worked through rather than around' : 'no debt numbers in the raw sums') +
+      kv('Chaldean name number', num.chaldean.compound + ' → ' + num.chaldean.single, 'from the name you use now (' + esc(num.usedWords.join(' ')) + '); Chaldean values letters by sound') +
+      '</div>');
+
+    // Lo Shu grid
+    var g = num.loShu;
+    h.push('<div class="card"><h4>Lo Shu grid — your birth date on the magic square</h4><div class="loshu">' +
+      g.grid.map(function (row, ri) {
+        return row.map(function (c, ci) {
+          var digit = [[4,9,2],[3,5,7],[8,1,6]][ri][ci];
+          return '<div class="cell' + (c ? ' on' : '') + '"><span class="d">' + digit + '</span><span class="c">' +
+                 (c ? Array(c + 1).join(digit + ' ').trim() : '·') + '</span></div>';
+        }).join('');
+      }).join('') + '</div>' +
+      (g.arrows.length ? '<p><b class="gold">Full lines:</b> ' + g.arrows.map(function (a) { return a.name + ' (' + a.t + ')'; }).join('; ') + '.</p>' : '') +
+      (g.missingArrows.length ? '<p><b class="gold">Empty lines:</b> ' + g.missingArrows.map(function (a) { return a.name.replace('Arrow of ', '') ; }).join(', ') + ' — areas that do not come naturally and are learned.</p>' : '') +
+      '<p class="what">Missing numbers: ' + (g.missing.length ? g.missing.join(', ') : 'none') + '. Each digit of your birth date is placed on the square; repeated digits strengthen a cell.</p></div>');
+
+    // Kua
+    if (kua) {
+      h.push('<div class="card"><h4>Kua number — ' + kua.number + ', ' + kua.group + ' group</h4>' +
+        '<p>From the Chinese year ' + kua.year + '. Feng Shui uses this for facing directions:</p>' +
+        '<div class="pan-grid">' + kua.dirs.map(function (d, i) { return kv(kua.labels[i], d); }).join('') + '</div></div>');
+    } else {
+      h.push('<div class="card"><h4>Kua number</h4><p class="what">Not computed — the Kua number is defined differently for men and women, and no gender was given. Add it under Edit if you want it.</p></div>');
+    }
+    h.push('<div class="pan-grid three">' +
+      kv('Lucky numbers', num.lucky.nums.join(', ')) + kv('Lucky day', num.lucky.day) + kv('Colours', num.lucky.color) + '</div>');
+    $('numHost').innerHTML = h.join('');
+
+    /* ---- western ---- */
+    var w = [];
+    w.push('<p class="lede sm">The same sky, measured from the spring equinox instead of the fixed stars — the zodiac you see in newspapers. It sits about ' + chart.ayanamsa.toFixed(0) + '° ahead of the Vedic one, so most signs shift by one.</p>');
+    w.push('<div class="pan-grid three">' + kv('Sun', west.sun, 'identity, the conscious self') +
+      kv('Moon', west.moon, 'instinct, needs, the private self') + kv('Rising', west.rising, 'the mask, the approach') + '</div>');
+    var order = ['Mercury','Venus','Mars','Jupiter','Saturn'];
+    w.push('<div class="pan-grid">' + order.map(function (p) {
+      return kv(p, west.signs[west.pos[p].sign], west.pos[p].deg.toFixed(0) + '°');
+    }).join('') + '</div>');
+    var maxEl = Math.max.apply(null, Object.keys(west.elements).map(function (k) { return west.elements[k]; }));
+    w.push('<div class="card"><h4>Element balance</h4>' + Object.keys(west.elements).map(function (k) {
+      return '<div class="bala-row"><span class="bn">' + k + '</span><span class="btrack"><i style="width:' +
+        (west.elements[k] / maxEl * 100).toFixed(0) + '%;background:var(--gold)"></i></span><span class="bv">' + west.elements[k] + '</span></div>';
+    }).join('') + '<p class="what">' + esc(west.dominantElement + '-dominant: you ' + west.elementText + '. Weakest is ' + west.weakestElement.toLowerCase() + ' — the mode you have to do on purpose.') + '</p></div>');
+    w.push('<div class="card"><h4>Modality</h4><p>' + Object.keys(west.modalities).map(function (k) { return k + ' ' + west.modalities[k]; }).join(' · ') +
+      '. ' + esc(west.dominantModality + ' leads: you are someone who ' + west.modalityText + '.') + '</p></div>');
+    if (west.aspects.length) {
+      w.push('<div class="card"><h4>Closest natal aspects</h4>' + west.aspects.map(function (a) {
+        var TONE = { easy: 'flows easily', tense: 'creates friction that drives growth', blend: 'fuses the two' };
+        return '<p><b class="gold">' + a.a + ' ' + a.name + ' ' + a.b + '</b> (' + a.orb.toFixed(1) + '° orb) — ' + TONE[a.tone] + '.</p>';
+      }).join('') + '</div>');
+    }
+    $('westHost').innerHTML = w.join('');
+
+    /* ---- four pillars ---- */
+    var z = [];
+    z.push('<p class="lede sm">Chinese astrology reads four moments at once — year, month, day and hour — each as a heavenly stem (element and polarity) over an earthly branch (the animal). The day stem is you.</p>');
+    z.push('<div class="tscroll"><table class="grahas bazi"><tr><th></th>' + fp.pillars.map(function (p) { return '<th>' + p.label + '</th>'; }).join('') + '</tr>' +
+      '<tr><td class="g">Stem</td>' + fp.pillars.map(function (p) { return '<td>' + (p.stem !== '-' ? '<b>' + p.stem + '</b><br><small>' + p.stemEl + ' ' + p.pol + '</small>' : '<small class="dim">needs the solar month</small>') + '</td>'; }).join('') + '</tr>' +
+      '<tr><td class="g">Branch</td>' + fp.pillars.map(function (p) { return '<td><b>' + p.animal.cn + ' ' + p.branch + '</b><br><small>' + p.branchEl + '</small></td>'; }).join('') + '</tr>' +
+      '<tr><td class="g">Means</td>' + fp.pillars.map(function (p) { return '<td><small>' + esc(p.means) + '</small></td>'; }).join('') + '</tr></table></div>');
+    z.push('<div class="card"><h4>Day master — ' + fp.dayMaster + '</h4><p>' + esc('The day stem is the self. ' + fp.dayMaster.split(' ')[0] + ' ' + fp.dayMasterText + '.') + '</p>' +
+      '<p class="what">Elements across the chart: ' + Object.keys(fp.elementCount).map(function (k) { return k + ' ' + fp.elementCount[k]; }).join(' · ') +
+      '. Strongest ' + fp.strongest + (fp.missing.length ? '; missing ' + fp.missing.join(' and ') + ' — the elements you need to bring in through people, places and work' : '') + '.</p>' +
+      (chart.timeKnown ? '' : '<p class="what">Birth time was not given, so the hour pillar is unverified.</p>') + '</div>');
+    z.push('<div class="pan-grid">' + kv('Hour', fp.pillars[3].hourName, 'the two-hour block you were born in') + kv('Inner animal', fp.pillars[2].branch, 'your day-branch animal — the private self') + '</div>');
+    $('baziHost').innerHTML = z.join('');
+
+    /* ---- tarot ---- */
+    $('tarotHost').innerHTML = '<p class="lede sm">Your birth date summed the tarot way (month + day + century + year) points to a card of the Major Arcana — a lifelong theme rather than a fortune.</p>' +
+      '<div class="tarot-row">' + tarot.map(function (t, i) {
+        return '<div class="card tcard"><div class="tn">' + t.n + '</div><div class="tname">' + esc(t.name) + '</div><div class="tkey">' + esc(t.key) + '</div>' +
+          '<div class="trole">' + (i === 0 ? 'personality card — how you move through the world' : i === 1 ? 'soul card — what the personality is in service of' : 'shadow / teacher card') + '</div></div>';
+      }).join('') + '</div>';
+
+    /* ---- ayurveda ---- */
+    var p = ay.primary;
+    $('ayurHost').innerHTML = '<p class="lede sm">Jyotisha and Ayurveda share a root: your birth star’s nadi maps to a dosha. ' +
+      'This is a starting point for daily habits, not a diagnosis.</p>' +
+      '<div class="card"><h4>' + p.n + ' — ' + esc(p.el) + (ay.secondary ? ', with some ' + ay.secondary.n : '') + '</h4>' +
+      '<p><b class="gold">Typically:</b> ' + esc(p.body) + '.</p>' +
+      '<p><b class="gold">Under strain:</b> ' + esc(p.strain) + '.</p></div>' +
+      '<div class="pan-grid"><div><div class="k">Eat</div><div class="s">' + esc(p.eat) + '</div></div>' +
+      '<div><div class="k">Do</div><div class="s">' + esc(p.do) + '</div></div>' +
+      '<div><div class="k">Avoid</div><div class="s">' + esc(p.avoid) + '</div></div>' +
+      '<div><div class="k">From</div><div class="s">' + esc(ay.nadi) + ' nadi, ' + esc(D.NAKSHATRAS[chart.moonNak].n) + ' nakshatra</div></div></div>';
+  }
+
   /* =========================================================================
      8. save
   ========================================================================= */
@@ -1175,6 +1411,24 @@
       L.push('  Best days: ' + state.month.days.best.map(function (d) { return d.day; }).join(', '));
       L.push('  Quiet days: ' + state.month.days.worst.map(function (d) { return d.day; }).join(', '));
     }
+    if (state.num) {
+      var nm = state.num;
+      L.push('');
+      L.push('NUMEROLOGY — ' + nm.words.join(' '));
+      L.push('  Life path ' + nm.lifePath + '   Birthday ' + nm.birthday + '   Expression ' + nm.expression +
+             '   Soul urge ' + nm.soulUrge + '   Personality ' + nm.personality + '   Maturity ' + nm.maturity);
+      L.push('  Personal year ' + nm.personalYear + ' / month ' + nm.personalMonth + ' / day ' + nm.personalDay +
+             '   Chaldean ' + nm.chaldean.compound + '/' + nm.chaldean.single);
+    }
+    if (state.sys) {
+      L.push('');
+      L.push('WESTERN: Sun ' + state.sys.west.sun + ', Moon ' + state.sys.west.moon + ', Rising ' + state.sys.west.rising +
+             ' — ' + state.sys.west.dominantElement + ' / ' + state.sys.west.dominantModality);
+      L.push('CHINESE: ' + state.sys.fp.pillars.map(function (p) { return p.label + ' ' + (p.stem !== '-' ? p.stem + ' ' : '') + p.branch; }).join(', ') +
+             ' — day master ' + state.sys.fp.dayMaster);
+      L.push('TAROT: ' + state.sys.tarot.map(function (t) { return t.name; }).join(' / ') +
+             '   AYURVEDA: ' + state.sys.ay.primary.n);
+    }
     L.push('');
     L.push('Computed in-browser. For reflection, not medical, legal or financial advice.');
 
@@ -1196,7 +1450,9 @@
     if (!raw) return;
     try {
       var b = JSON.parse(raw);
-      $('fName').value = b.name === 'Traveller' ? '' : b.name;
+      $('fFullName').value = b.fullName || (b.name === 'Traveller' ? '' : b.name);
+      $('fName').value = b.usedName || '';
+      $('fGender').value = b.gender || '';
       $('fDate').value = b.y + '-' + pad2(b.m) + '-' + pad2(b.d);
       $('fTime').value = pad2(b.hh) + ':' + pad2(b.mm);
       $('fTz').value = (b.tz >= 0 ? '+' : '') + b.tz;

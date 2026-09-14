@@ -96,6 +96,43 @@ each quadrant between the Ascendant, IC, Descendant and MC, and reports every gr
 changes house between the two. Those near-cusp placements are exactly the ones a careless
 chart gets wrong.
 
+## The other systems, from the same birth moment
+
+The form asks for three things beyond date, time and place, because these systems need
+them — and it says on the form which system needs what:
+
+| Input | Needed by |
+|---|---|
+| Full name at birth | Numerology: Expression, Soul Urge, Personality, Karmic Lessons, Hidden Passion all read the letters of the given name |
+| Name used now (optional) | Chaldean name number; also how the site addresses you |
+| Gender (optional) | The Feng Shui Kua number only, which is defined differently for men and women |
+
+**Numerology** (`numerology.js`) — Pythagorean core numbers with master numbers kept (Life
+Path, Birthday, Expression, Soul Urge, Personality, Maturity), Personal Year/Month/Day,
+Pinnacles with their age spans and the current one flagged, Challenges, Karmic Debt (13/14/16/19
+in the raw sums), Karmic Lessons and Hidden Passion, the Chaldean compound and reduced name
+number, the Lo Shu grid with its arrows, Kua number and facing directions, and Tarot birth cards
+by the Greer method. Y is a vowel only when it is not next to another vowel. Validated against
+hand-worked values.
+
+**Western astrology** (`systems.js`) — tropical Sun, Moon, Rising and the five classical planets,
+element and modality balance (Sun, Moon and Rising weighted double), and the closest natal
+aspects with orbs.
+
+**Chinese Four Pillars** — year, month, day and now the **hour** pillar, with the hour stem from
+the day stem (the Five Rats rule), the Day Master and its element, element counts and missing
+elements. The month stem is not shown because it needs the exact solar month, which is
+approximated.
+
+**Ayurvedic constitution** — the birth nakshatra's nadi mapped to Vata/Pitta/Kapha, with
+eat/do/avoid guidance. Presented as a starting point for habits, not a diagnosis.
+
+**The dashboard** — the Overview tab opens with eight at-a-glance cards (rising, Moon, Sun,
+current life chapter, life path, Chinese sign, birth card, constitution), a plain-English
+portrait synthesised across systems, a "where you are now" block (dasha, personal year,
+Chinese year relation, Saturn passes, current pinnacle), then strengths and cautions. The
+Chart tab holds the full classical working; the Systems tab holds everything above.
+
 ## Written for a person, not an astrologer
 
 The classical layer is accurate but unreadable unless you already know what a

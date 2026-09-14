@@ -38,8 +38,8 @@
     'income and gains', 'costs and letting go'];
 
   var PLANET = {
-    Sun:     { n:'the Sun',  role:'confidence, authority and your father' },
-    Moon:    { n:'the Moon', role:'your mind, your moods and your mother' },
+    Sun:     { n:'the Sun',  b:'Sun',  role:'confidence, authority and your father' },
+    Moon:    { n:'the Moon', b:'Moon', role:'your mind, your moods and your mother' },
     Mars:    { n:'Mars',     role:'drive, courage and appetite for a fight' },
     Mercury: { n:'Mercury',  role:'thinking, speech, trade and paperwork' },
     Jupiter: { n:'Jupiter',  role:'growth, luck, teachers and good faith' },
@@ -76,6 +76,8 @@
   }
 
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  // name without its article, for phrases like "a Saturn chapter"
+  function bare(P) { return P.b || P.n; }
   // drop the capital when a connective now runs in front of the sentence
   function lowerFirst(s, doIt) { return doIt ? s.charAt(0).toLowerCase() + s.slice(1) : s; }
   function pct(x) { return Math.round(x * 100) + '%'; }
@@ -121,8 +123,8 @@
     if (d) {
       var M = PLANET[d.maha.lord], Aa = d.antar ? PLANET[d.antar.lord] : null;
       var ae = d.antar ? A.fromJD(d.antar.end) : null;
-      var s = 'Life runs in long chapters, each named after a planet. You are in a ' + M.n +
-        ' chapter' + (Aa ? ', and inside it a shorter ' + Aa.n + ' phase that lasts until ' +
+      var s = 'Life runs in long chapters, each named after a planet. You are in a ' + bare(M) +
+        ' chapter' + (Aa ? ', and inside it a shorter ' + bare(Aa) + ' phase that lasts until ' +
         monthYear(ae) : '') + '.';
       var owns = (h.lord === d.maha.lord) || (d.antar && h.lord === d.antar.lord);
       if (owns) s += ' Since that same planet runs ' + subject + ', this whole stretch is genuinely about it — not a passing mood.';

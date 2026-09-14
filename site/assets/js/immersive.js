@@ -207,12 +207,32 @@
     if (b) { e.preventDefault(); goTo(b.dataset.go); }
   });
 
+  /* Our own eased scroll: native smooth scrolling is inconsistent across
+     browsers over a page this long, and some embedded browsers ignore it.
+     Any wheel, touch or key press hands control straight back to the user. */
+  var scrollAnim = null;
+  function cancelScroll() { if (scrollAnim) { clearTimeout(scrollAnim); scrollAnim = null; } }
+  ['wheel', 'touchstart', 'keydown'].forEach(function (ev) {
+    window.addEventListener(ev, cancelScroll, { passive: true });
+  });
   function goTo(id, instant) {
     var el = $(id); if (!el) return;
-    var top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0)
-              - (el.classList.contains('landing') ? 0 : 58);
-    if (instant || reduce || !('scrollBehavior' in document.documentElement.style)) window.scrollTo(0, Math.max(0, top));
-    else window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    var from = window.scrollY || window.pageYOffset || 0;
+    var top = el.getBoundingClientRect().top + from - (el.classList.contains('landing') ? 0 : 58);
+    var maxTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    top = Math.max(0, Math.min(top, maxTop));
+    cancelScroll();
+    if (instant || reduce) { window.scrollTo(0, top); spy(); return; }
+    var dist = top - from;
+    if (Math.abs(dist) < 2) return;
+    // a timer, not requestAnimationFrame: frames pause in a hidden or
+    // occluded tab, and the jump must still complete
+    var dur = Math.min(1300, Math.max(450, Math.abs(dist) * 0.35)), t0 = Date.now();
+    (function step() {
+      var k = Math.min(1, (Date.now() - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      window.scrollTo(0, from + dist * e);
+      if (k < 1) scrollAnim = setTimeout(step, 16); else { scrollAnim = null; spy(); }
+    })();
   }
 
   function setActive(i) {
@@ -246,6 +266,9 @@
   }
 
   function spy() {
+    if (!sections.length) return;
+    var docH = document.documentElement.scrollHeight - window.innerHeight, sy = window.scrollY || window.pageYOffset || 0;
+    progress.style.width = (docH > 0 ? Math.min(100, sy / docH * 100) : 0) + '%';
     var mid = window.innerHeight * 0.42, cur = -1;
     for (var i = 0; i < sections.length; i++) {
       var s = sections[i];
@@ -358,8 +381,6 @@
         glyphs[i].el.style.transform = 'translateY(' + (r.top * -0.14).toFixed(1) + 'px)';
       }
     }
-    var docH = document.documentElement.scrollHeight - window.innerHeight;
-    progress.style.width = (docH > 0 ? Math.min(100, sy / docH * 100) : 0) + '%';
     if (tick % 5 === 0) spy();
     requestAnimationFrame(loop);
   }
@@ -383,12 +404,20 @@
   }
   setTimeout(shoot, 4500);
 
+  var spyPending = false;
+  window.addEventListener('scroll', function () {
+    if (spyPending) return;
+    spyPending = true;
+    setTimeout(function () { spyPending = false; spy(); }, 90);
+  }, { passive: true });
+
   function unlock() {
     $('journey').classList.remove('locked');
     document.body.classList.add('cast');
     var cue = $('scrollCue'); if (cue) cue.hidden = false;
     collectGlyphs();
     refresh();
+    spy();
   }
 
   build();

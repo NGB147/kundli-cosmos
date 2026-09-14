@@ -1494,10 +1494,10 @@
     Venus:   'sweetens whatever it touches, so ease, charm and money lean toward ',
     Mercury: 'sharpens whatever it touches, so talks, paperwork and decisions move quickly around ',
     Sun:     'lights whatever it touches, so people who matter can see ',
-    Moon:    'passes over it today, so feelings run high for a day or two around ',
+    Moon:    'is passing over it today, so feelings run high for a day or two around ',
     Mars:    'heats whatever it touches, so there is energy but also friction around ',
     Saturn:  'tests whatever it touches for months, and what survives is permanent in ',
-    Rahu:    'bends whatever it touches toward the unusual or the foreign, in ',
+    Rahu:    'bends whatever it touches toward the unusual or the foreign, so the odd route works better than the official one in ',
     Ketu:    'loosens whatever it touches, so something is quietly being released in '
   };
   var TRANSIT_TONE = { Jupiter:'pos', Venus:'pos', Mercury:'pos', Moon:'pos', Sun:'', Mars:'neg', Saturn:'neg', Rahu:'neg', Ketu:'neg' };
@@ -1593,11 +1593,22 @@
     11: 'gains. Money in, friends around; ask for what you want.',
     12: 'a leaky day. Sleep, spend and lose things; rest and finish rather than start.'
   };
+  /* Master numbers survive the reduction in numerology, so a personal day can
+     be 11, 22 or 33 as well as 1..9. dayMeaning() falls back to the reduced
+     digit for anything unexpected rather than printing nothing. */
   var PDAY = {
     1: 'begin something', 2: 'cooperate and wait', 3: 'talk, write, be social', 4: 'organise and do the dull work',
     5: 'change something, move', 6: 'look after home and people', 7: 'think, rest, be alone', 8: 'deal with money and business',
-    9: 'finish, give, let go'
+    9: 'finish, give, let go',
+    11: 'trust an instinct and say the thing out loud', 22: 'work on something bigger than today',
+    33: 'look after someone who needs it'
   };
+  function dayMeaning(n) {
+    if (PDAY[n]) return PDAY[n];
+    var r = n;
+    while (r > 9) r = String(r).split('').reduce(function (a, c) { return a + (+c); }, 0);
+    return PDAY[r] || 'take the day as it comes';
+  }
   var VERDICT_DAY = [[1.8, 'A strong day'], [0.6, 'A good day'], [-0.6, 'An ordinary day'], [-1.8, 'A quiet day'], [-99, 'A day to keep small']];
 
   function renderToday(chart, m) {
@@ -1615,11 +1626,13 @@
     var moonLord = D.RASHIS[chart.moonSign].lord, rel = K.relation(moonLord, p.vara.lord);
     lines.push('It is ' + p.paksha + ' ' + p.tithiName + ', with the Moon ' +
       (p.paksha === 'Shukla' ? 'filling' : 'thinning') + '. ' + p.vara.n + ' belongs to ' +
-      (P.PLANET[p.vara.lord].b || P.PLANET[p.vara.lord].n) + ', ' +
-      (rel === 'friend' || rel === 'own' ? 'a friend of your Moon, so the day runs with you.'
-       : rel === 'enemy' ? 'no friend of your Moon, so things take a little longer than they should.'
-       : 'neutral to your Moon.'));
-    if (state.num) lines.push('Your personal day number is ' + state.num.personalDay + ': a day to ' + PDAY[state.num.personalDay] + '.');
+      P.PLANET[p.vara.lord].n + ', ' +
+      (rel === 'friend' || rel === 'own'
+        ? 'a friend of the planet that rules your Moon sign, so the day runs with you.'
+        : rel === 'enemy'
+        ? 'no friend of the planet that rules your Moon sign, so things take a little longer than they should.'
+        : 'neutral toward the planet that rules your Moon sign.'));
+    if (state.num) lines.push('Your personal day number is ' + state.num.personalDay + ': a day to ' + dayMeaning(state.num.personalDay) + '.');
     var cn = K.chinesePillars(now.getFullYear(), now.getMonth() + 1, now.getDate(), 12, 0, todayTz);
     var crel = K.animalRelation(m.natalChinese.animalIdx, cn.dayBranchIdx);
     lines.push('In the Chinese day count this is a ' + cn.dayElement.n + ' ' + cn.dayAnimal.n + ' day. Against your ' +
@@ -1641,7 +1654,7 @@
       fact('Tithi', p.paksha + ' ' + p.tithiName, p.monthName + ' māsa') +
       fact('Nakṣatra', p.nakName, rec.tara.n + ' star for you') +
       fact('Moon sign', D.RASHIS[p.moonSign].n, ORD[rec.chandra.num] + ' from your Moon') +
-      fact('Personal day', state.num ? String(state.num.personalDay) : '—', state.num ? PDAY[state.num.personalDay] : '') +
+      fact('Personal day', state.num ? String(state.num.personalDay) : '—', state.num ? dayMeaning(state.num.personalDay) : '') +
       '</div>';
     renderWeek(chart);
   }

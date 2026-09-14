@@ -78,6 +78,16 @@ where every planet is tonight.
   chandra bala, tithi quality and weekday lordship, producing genuinely personal
   favourable and inauspicious dates.
 
+## Tests
+
+```bash
+node tools/test-quotes.cjs
+```
+
+Checks every verse is well formed, that the daily verse is stable within a day and
+spreads across the year, and that the farewell verse genuinely tracks the life area
+asked about and the verdict given.
+
 ## Geography
 
 Birth place is resolved against the full GeoNames India gazetteer: **557,135 populated

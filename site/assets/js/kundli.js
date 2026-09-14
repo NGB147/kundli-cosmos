@@ -232,7 +232,26 @@
       if (jd >= seg.start && jd < seg.end) antar = seg;
       t += len;
     }
-    return { maha: maha, antar: antar, antarList: list };
+
+    /* Pratyantardasha, the third level. An antardasha can run for years, so
+       without this a month-by-month forecast is flat inside it; these last
+       weeks to months and are what actually date an event. */
+    var praty = null, pratyList = [];
+    if (antar) {
+      var aStart = D.DASHA_ORDER.indexOf(antar.lord);
+      var aLen = antar.end - antar.start;
+      var u = antar.start;
+      for (i = 0; i < 9; i++) {
+        var pl = D.DASHA_ORDER[(aStart + i) % 9];
+        var plen = aLen * D.DASHA_YEARS[pl] / 120;
+        var pseg = { lord: pl, start: u, end: u + plen };
+        pratyList.push(pseg);
+        if (jd >= pseg.start && jd < pseg.end) praty = pseg;
+        u += plen;
+      }
+    }
+    return { maha: maha, antar: antar, antarList: list,
+             praty: praty, pratyList: pratyList };
   }
 
   /* ---------- panchang ---------------------------------------------------- */

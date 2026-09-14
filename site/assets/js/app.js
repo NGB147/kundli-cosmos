@@ -796,7 +796,9 @@
     if (tg && bd) {
       tg.addEventListener('click', function () {
         bd.hidden = !bd.hidden;
-        tg.textContent = bd.hidden ? 'Show the full working' : 'Hide the full working';
+        tg.textContent = bd.hidden
+          ? 'Show the traditional reading (Sanskrit terms)'
+          : 'Hide the traditional reading';
       });
     }
     slot.querySelector('[data-go]').textContent = 'Ask this one differently';
@@ -813,15 +815,16 @@
       var bar = y.norm >= 0
         ? '<i class="pos" style="left:50%;width:' + pct.toFixed(1) + '%"></i>'
         : '<i class="neg" style="left:' + (50 - pct).toFixed(1) + '%;width:' + pct.toFixed(1) + '%"></i>';
-      out.push('<div class="sysrow"><span class="sname">' + esc(y.name) + '</span>' +
+      out.push('<div class="sysrow"><span class="sname">' + esc(y.name) +
+        (y.sanskrit ? '<em>' + esc(y.sanskrit) + '</em>' : '') + '</span>' +
         '<span class="sbar">' + bar + '</span>' +
         '<span class="sysweight">' + y.weight.toFixed(2) + '</span>' +
         '<span class="snote">' + esc(y.note) + '</span></div>');
     });
-    out.push('</div><p class="foot lead-left">Bar shows which way each system leans; the number is ' +
-      'how much weight it carries in the combined verdict. The Vedic layers weigh most because they ' +
-      'are computed from your exact birth moment and place. Chinese zodiac and numerology weigh ' +
-      'least because they use only your birth date, so thousands of people share them.</p>');
+    out.push('</div><p class="foot lead-left">The bar shows which way each method leans. The number ' +
+      'is how much it counts toward the final answer. The Indian chart methods count most, because ' +
+      'they use your exact birth minute and place. Chinese zodiac and numerology count least, ' +
+      'because they only use your birth date — thousands of people share those.</p>');
     return out.join('');
   }
 
@@ -861,10 +864,33 @@
       }
       h.push('</div></div>');
 
-      /* --- how each system voted --- */
-      h.push('<div class="sub-block"><b>What each system says</b>' + sysGrid(sm.consensus) + '</div>');
+      /* --- the same thing, in English --- */
+      if (sm.spoken) {
+        var sp = sm.spoken;
+        h.push('<div class="spoken">');
+        h.push('<h5>In plain words</h5>');
+        sp.narrative.forEach(function (n) { h.push('<p>' + esc(n) + '</p>'); });
 
-      h.push('<button type="button" class="details-toggle" data-toggle>Show the full working</button>');
+        if (sp.why.length) {
+          h.push('<h5>Why the chart says this</h5><ul class="plainlist">');
+          sp.why.forEach(function (w) {
+            h.push('<li class="' + (w.w > 0 ? 'pos' : w.w < 0 ? 'neg' : '') + '">' + esc(w.t) + '</li>');
+          });
+          h.push('</ul>');
+        }
+        if (sp.doing.length) {
+          h.push('<h5>What to do about it</h5><ul class="plainlist do">');
+          sp.doing.forEach(function (x) { h.push('<li>' + esc(x) + '</li>'); });
+          h.push('</ul>');
+        }
+        h.push('</div>');
+      }
+
+      /* --- how each system voted --- */
+      h.push('<div class="sub-block"><b>How each method voted</b>' + sysGrid(sm.consensus) + '</div>');
+
+      h.push('<button type="button" class="details-toggle" data-toggle>' +
+        'Show the traditional reading (Sanskrit terms)</button>');
       h.push('<div class="details-body" data-details hidden>');
     }
 
@@ -905,12 +931,18 @@
     var p = m.panchang;
 
     var h = [];
+    var mp = window.Plainspeak ? window.Plainspeak.monthPlain(chart, m, nowJD()) : null;
     h.push('<div class="verdict-hero"><div class="eyebrow">Your reading for</div>' +
       '<div class="m grad">' + esc(m.month) + '</div>' +
       '<div class="vv"><span class="pill ' + m.verdict.cls + '">' + m.verdict.label + '</span></div>' +
-      '<p class="sy">' + esc(m.synthesis) + '</p></div>');
+      (mp ? '<div class="sy">' + mp.lines.map(function (l) { return '<p>' + esc(l) + '</p>'; }).join('') + '</div>' : '') +
+      '</div>');
+    if (mp && mp.doing.length) {
+      h.push('<div class="spoken"><h5>What to do with this month</h5><ul class="plainlist do">' +
+        mp.doing.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>');
+    }
 
-    h.push('<div class="section-h">The three calendars</div>');
+    h.push('<div class="section-h">The three calendars, in detail</div>');
     m.layers.forEach(function (l) {
       h.push('<div class="layer-card"><div class="lh"><span class="ic">' + l.icon + '</span>' +
         '<span class="ti">' + esc(l.title) + '</span></div><p>' + esc(l.text) + '</p></div>');

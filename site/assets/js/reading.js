@@ -390,7 +390,8 @@
     var b = cons ? bandNorm(combined) : band(total);
     var summary = (F && tl && cons)
       ? { plain: F.plain(dom, b, tl, cons), timeline: tl, consensus: cons,
-          combined: combined, detailScore: total }
+          combined: combined, detailScore: total,
+          spoken: root.Plainspeak ? root.Plainspeak.explain(chart, dom, jdNow, b, tl, cons) : null }
       : null;
 
     // weakest planet in the picture drives the remedy
@@ -586,10 +587,16 @@
 
   /* ---------- per-day scoring for the month -------------------------------- */
 
+  /* A pañcāṅga day runs sunrise to sunrise, and the tithi/nakṣatra printed
+     against a date are the ones current AT SUNRISE. Evaluating at any other
+     hour is what makes an app disagree with a printed pañcāṅga. */
   function dayGrid(chart, monthStartJD, daysInMonth, now) {
     var out = [];
+    var b = chart.birth;
     for (var i = 0; i < daysInMonth; i++) {
-      var jd = monthStartJD + i + (9 - chart.birth.tz) / 24;   // ~09:00 local
+      var rs = A.sunRiseSet(now.y, now.m, i + 1, b.lat, b.lon, b.tz);
+      var jd = (rs && rs.rise) ? rs.rise
+             : A.toJD(now.y, now.m, i + 1, 6, 0, 0) - b.tz / 24;   // polar fallback
       var p = K.panchang(jd, chart.birth.tz);
       var s = 0, notes = [];
 

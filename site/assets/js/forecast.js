@@ -56,8 +56,9 @@
     var d = K.dashaAt(chart.dasha, jd);
     if (d) {
       s += lordRelevance(chart, d.maha.lord, dom) * 1.0;
-      // the antardasha is what actually fires an event inside the long period
+      // the antardasha sets the theme, the pratyantardasha fires the event
       if (d.antar) s += lordRelevance(chart, d.antar.lord, dom) * 1.5;
+      if (d.praty) s += lordRelevance(chart, d.praty.lord, dom) * 1.2;
     }
 
     ['Jupiter','Saturn'].forEach(function (name) {
@@ -180,7 +181,7 @@
     var natal = lord.dignity.score * 1.2 +
       ([1,4,7,10].indexOf(lord.house) >= 0 ? 0.8 : [5,9].indexOf(lord.house) >= 0 ? 1.0 :
        [6,8,12].indexOf(lord.house) >= 0 ? -1.0 : 0.3);
-    sys.push({ key:'parashari', name:'Vedic natal chart', weight:0.95,
+    sys.push({ key:'parashari', name:'Your birth chart', sanskrit:'Parashari', weight:0.95,
       raw: natal, norm: clamp(natal / 2.5, -1, 1),
       note: D.GRAHAS[lord.name].dev + ' rules the ' + ord(house) + ' from the ' + ord(lord.house) + '.' });
 
@@ -192,13 +193,13 @@
       dv = dv * 2 - 0.6;
       dnote = D.GRAHAS[d.maha.lord].dev + '/' + D.GRAHAS[d.antar.lord].dev + ' running now.';
     }
-    sys.push({ key:'dasha', name:'Vimshottari dasha', weight:0.95,
+    sys.push({ key:'dasha', name:'The life-chapter you are in', sanskrit:'Vimshottari dasha', weight:0.95,
       raw: dv, norm: clamp(dv / 2, -1, 1), note: dnote });
 
     // --- 3. Ashtakavarga ---
     if (chart.deep) {
       var bindu = chart.deep.av.sav[h.sign];
-      sys.push({ key:'av', name:'Ashtakavarga', weight:0.7,
+      sys.push({ key:'av', name:'Support score for this area', sanskrit:'Ashtakavarga', weight:0.7,
         raw: bindu, norm: clamp((bindu - 28) / 8, -1, 1),
         note: bindu + ' bindus in this house (28 is average).' });
 
@@ -207,7 +208,7 @@
       var d9d = K.dignityOf(lord.name, d9 * 30 + 15);
       var varg = chart.deep.vargottama.indexOf(lord.name) >= 0;
       var nv = varg ? 1.6 : d9d.score;
-      sys.push({ key:'navamsa', name:'Navamsa (D-9)', weight:0.8,
+      sys.push({ key:'navamsa', name:'Does it hold up over time', sanskrit:'Navamsa D-9', weight:0.8,
         raw: nv, norm: clamp(nv / 2, -1, 1),
         note: varg ? D.GRAHAS[lord.name].dev + ' is vargottama.'
                    : D.GRAHAS[lord.name].dev + ' is ' + d9d.label.toLowerCase() + ' in the D-9.' });
@@ -215,7 +216,7 @@
       // --- 5. Shadbala ---
       var sb = chart.deep.bala[lord.name];
       if (sb) {
-        sys.push({ key:'bala', name:'Shadbala', weight:0.6,
+        sys.push({ key:'bala', name:'Strength of the ruling planet', sanskrit:'Shadbala', weight:0.6,
           raw: sb.ratio, norm: clamp((sb.ratio - 1) * 2, -1, 1),
           note: D.GRAHAS[lord.name].dev + ' at ' + sb.ratio.toFixed(2) + ' of its required strength.' });
       }
@@ -223,7 +224,7 @@
 
     // --- 6. Western transits ---
     var w = westernScore(chart, jdNow);
-    sys.push({ key:'western', name:'Western transits', weight:0.5,
+    sys.push({ key:'western', name:'Western astrology', sanskrit:'transits', weight:0.5,
       raw: w.score, norm: clamp(w.score / 1.6, -1, 1),
       note: w.hits.length ? w.hits.slice(0, 2).join(', ') + '.' : 'no major transit within orb.' });
 
@@ -233,14 +234,14 @@
     var nowD = A.fromJD(jdNow);
     var nowCn = K.chinesePillars(nowD.y, nowD.m, nowD.d, 12, 0, chart.birth.tz);
     var rel = K.animalRelation(natalCn.animalIdx, nowCn.animalIdx);
-    sys.push({ key:'chinese', name:'Chinese zodiac', weight:0.3,
+    sys.push({ key:'chinese', name:'Chinese zodiac', sanskrit:'', weight:0.3,
       raw: rel.score, norm: clamp(rel.score / 1.5, -1, 1),
       note: nowCn.animal.n + ' year against your ' + natalCn.animal.n + ': ' + rel.key + '.' });
 
     // --- 8. Numerology ---
     var lp = lifePath(chart.birth);
     var affin = (PATH_AFFINITY[dom.id] || []).indexOf(lp) >= 0;
-    sys.push({ key:'numerology', name:'Numerology', weight:0.2,
+    sys.push({ key:'numerology', name:'Numerology', sanskrit:'', weight:0.2,
       raw: affin ? 0.6 : 0.05, norm: affin ? 0.6 : 0.05,
       note: 'Life path ' + lp + (affin ? ', which suits this area.' : ', neutral for this area.') });
 

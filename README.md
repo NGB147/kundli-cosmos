@@ -94,6 +94,25 @@ each quadrant between the Ascendant, IC, Descendant and MC, and reports every gr
 changes house between the two. Those near-cusp placements are exactly the ones a careless
 chart gets wrong.
 
+## Written for a person, not an astrologer
+
+The classical layer is accurate but unreadable unless you already know what a
+dusthana or a karaka is. `plainspeak.js` translates the same computed values into
+ordinary English, and every answer now reads:
+
+1. **The short answer** - a verdict word, a real date window, a confidence level.
+2. **In plain words** - what is going on, in three sentences.
+3. **Why the chart says this** - signed bullets, no Sanskrit.
+4. **What to do about it** - dates to aim at, dates to avoid, the weak link.
+5. **How each method voted** - eight methods with plain labels.
+6. *Show the traditional reading* - the Sanskrit version, collapsed, for anyone
+   who wants it. Nothing was deleted; it was demoted.
+
+Nothing in the plain layer invents a claim - each sentence is a translation of a
+value the classical modules already computed. A regression scans generated text
+for 49 technical terms and fails if any reach the plain layer: 1,760 answers, zero
+leaks.
+
 ## The answer people actually read
 
 Every question now opens with a plain-English verdict and a **real date window**, with the
@@ -125,7 +144,7 @@ Checked against published values:
 | Check | Result |
 |---|---|
 | Planetary longitudes at J2000.0 | within ~1 arcminute |
-| New and full moon times (1999–2025) | within 1 minute |
+| New and full moon times (1999-2025) | exact to the minute (was 1 min late before Delta T) |
 | December solstice 2025 | 15:01 UT vs 15:03 UT published |
 | Chinese New Year 2000–2027 | all 9 sampled dates exact |
 | Holi, Ugadi, Diwali tithi + month | correct, with correct Vikram/Shaka years |

@@ -1,6 +1,6 @@
 /* ============================================================================
    astro.js - compact geocentric ephemeris for the browser
-   Sun & Moon: Meeus, Astronomical Algorithms (ch. 25 & 47, truncated series)
+   Sun & Moon: Meeus, Astronomical Algorithms (ch. 25; ch. 47 full 59-term series)
    Planets:    JPL approximate Keplerian elements, valid ~1800-2050
    Sidereal:   Lahiri (Chitrapaksha) ayanamsa
    No dependencies. All angles in degrees unless noted.
@@ -54,6 +54,40 @@
 
   function centuries(jd) { return (jd - 2451545.0) / 36525.0; }
 
+  /* ---------- Delta T: Terrestrial Time minus Universal Time ------------
+     Planetary theory runs on TT; civil birth times are UT. The gap is ~70s
+     today and the Moon moves 0.55 deg/hour, so ignoring it puts the Moon out
+     by ~0.011 deg. That is small on a rashi but it propagates straight into
+     the Vimshottari dasha balance, where it becomes days.
+     Polynomials: Espenak & Meeus, NASA Five Millennium Canon.
+     Sidereal time and the ascendant stay on UT - they must not be shifted. */
+  function deltaT(jd) {
+    var c = fromJD(jd);
+    var y = c.y + (c.m - 0.5) / 12, t;
+    if (y < 1900) { t = (y - 1820) / 100; return -20 + 32 * t * t - 0.5628 * (2150 - y); }
+    if (y < 1920) { t = y - 1900;
+      return -2.79 + 1.494119 * t - 0.0598939 * t * t + 0.0061966 * t * t * t
+             - 0.000197 * t * t * t * t; }
+    if (y < 1941) { t = y - 1920;
+      return 21.20 + 0.84493 * t - 0.076100 * t * t + 0.0020936 * t * t * t; }
+    if (y < 1961) { t = y - 1950;
+      return 29.07 + 0.407 * t - t * t / 233 + t * t * t / 2547; }
+    if (y < 1986) { t = y - 1975;
+      return 45.45 + 1.067 * t - t * t / 260 - t * t * t / 718; }
+    if (y < 2005) { t = y - 2000;
+      return 63.86 + 0.3345 * t - 0.060374 * t * t + 0.0017275 * t * t * t
+             + 0.000651814 * Math.pow(t, 4) + 0.00002373599 * Math.pow(t, 5); }
+    if (y < 2050) { t = y - 2000;
+      return 62.92 + 0.32217 * t + 0.005589 * t * t; }
+    if (y < 2150) { t = (y - 1820) / 100;
+      return -20 + 32 * t * t - 0.5628 * (2150 - y); }
+    t = (y - 1820) / 100;
+    return -20 + 32 * t * t;
+  }
+
+  // UT -> TT, for everything that is a position of a body
+  function toTT(jd) { return jd + deltaT(jd) / 86400; }
+
   /* ---------- obliquity & nutation ------------------------------------ */
 
   function meanObliquity(T) {
@@ -78,7 +112,7 @@
   /* ---------- Sun (Meeus ch. 25) --------------------------------------- */
 
   function sunLongitude(jd) {
-    var T = centuries(jd);
+    var T = centuries(toTT(jd));
     var L0 = norm360(280.46646 + 36000.76983 * T + 0.0003032 * T * T);
     var M  = norm360(357.52911 + 35999.05029 * T - 0.0001537 * T * T);
     var C  = (1.914602 - 0.004817 * T - 0.000014 * T * T) * sind(M) +
@@ -88,7 +122,7 @@
     return norm360(L0 + C - 0.00569 - 0.00478 * sind(Om));
   }
 
-  /* ---------- Moon (Meeus ch. 47, 35 leading terms) --------------------- */
+  /* ---------- Moon (Meeus ch. 47, all 59 longitude terms) --------------- */
 
   // [D, M, Mprime, F, coefficient in 1e-6 degrees]
   var MOON_TERMS = [
@@ -100,11 +134,19 @@
     [2,1,0,0,   -6766],[1,0,-1,0,  -5163],[1,1,0,0,    4987],[2,-1,1,0,  4036],
     [2,0,2,0,    3994],[4,0,0,0,    3861],[2,0,-3,0,   3665],[0,1,-2,0, -2689],
     [2,0,-1,2,  -2602],[2,-1,-2,0,  2390],[1,0,1,0,   -2348],[2,-2,0,0,  2236],
-    [0,1,2,0,   -2120],[0,2,0,0,   -2069],[2,-2,-1,0,  2048]
+    [0,1,2,0,   -2120],[0,2,0,0,   -2069],[2,-2,-1,0,  2048],
+    // the remaining Meeus 47.A terms: they take the Moon from ~0.02 deg to
+    // ~0.003 deg, which matters because Moon error becomes dasha-date error
+    [2,0,1,-2,  -1773],[2,0,0,2,   -1595],[4,-1,-1,0,  1215],[0,0,2,2,  -1110],
+    [3,0,-1,0,   -892],[2,1,1,0,    -810],[4,-1,-2,0,   759],[0,2,-1,0,  -713],
+    [2,2,-1,0,   -700],[2,1,-2,0,    691],[2,-1,0,-2,   596],[4,0,1,0,    549],
+    [0,0,4,0,     537],[4,-1,0,0,    520],[1,0,-2,0,   -487],[2,1,0,-2,  -399],
+    [0,0,2,-2,   -381],[1,1,1,0,     351],[3,0,-2,0,   -340],[4,0,-3,0,   330],
+    [2,-1,2,0,    327],[0,2,1,0,    -323],[1,1,-1,0,    299],[2,0,3,0,    294]
   ];
 
   function moonLongitude(jd) {
-    var T = centuries(jd), T2 = T * T, T3 = T2 * T, T4 = T3 * T;
+    var T = centuries(toTT(jd)), T2 = T * T, T3 = T2 * T, T4 = T3 * T;
     var Lp = norm360(218.3164477 + 481267.88123421 * T - 0.0015786 * T2 + T3 / 538841 - T4 / 65194000);
     var D  = norm360(297.8501921 + 445267.1114034 * T - 0.0018819 * T2 + T3 / 545868 - T4 / 113065000);
     var M  = norm360(357.5291092 +  35999.0502909 * T - 0.0001536 * T2 + T3 / 24490000);
@@ -130,7 +172,7 @@
 
   // Mean ascending node = Rahu (Vedic standard uses the mean node)
   function rahuLongitude(jd) {
-    var T = centuries(jd);
+    var T = centuries(toTT(jd));
     return norm360(125.0445479 - 1934.1362891 * T + 0.0020754 * T * T +
                    T * T * T / 467441 - T * T * T * T / 60616000);
   }
@@ -185,7 +227,7 @@
 
   // Geocentric ecliptic longitude of date (tropical)
   function planetLongitude(name, jd) {
-    var T = centuries(jd);
+    var T = centuries(toTT(jd));
     var p = heliocentric(name, T), e = heliocentric('Earth', T);
     var dx = p.x - e.x, dy = p.y - e.y;
     var lonJ2000 = norm360(Math.atan2(dy, dx) * R2D);
@@ -383,7 +425,7 @@
     D2R: D2R, R2D: R2D,
     norm360: norm360, norm180: norm180, sind: sind, cosd: cosd, tand: tand,
     toJD: toJD, fromJD: fromJD, localToJD: localToJD, centuries: centuries,
-    meanObliquity: meanObliquity, ayanamsa: ayanamsa,
+    meanObliquity: meanObliquity, ayanamsa: ayanamsa, deltaT: deltaT, toTT: toTT,
     sunLongitude: sunLongitude, moonLongitude: moonLongitude, rahuLongitude: rahuLongitude,
     planetLongitude: planetLongitude,
     tropicalLongitude: tropicalLongitude, siderealLongitude: siderealLongitude,

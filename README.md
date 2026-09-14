@@ -10,7 +10,9 @@ visitor's birth details in their own browser, and nothing leaves the device.
 ## What it actually computes
 
 **Ephemeris** (`assets/js/astro.js`)
-- Sun and Moon from Meeus, *Astronomical Algorithms* (ch. 25 and the 35 leading terms of ch. 47)
+- Sun and Moon from Meeus, *Astronomical Algorithms* (ch. 25; all 59 longitude terms of ch. 47)
+- Delta T applied (Espenak & Meeus) so body positions run on Terrestrial Time while
+  sidereal time and the ascendant stay on Universal Time
 - Mercury–Saturn from JPL's approximate Keplerian elements, solved with Newton–Raphson
 - Rahu/Ketu from the mean lunar node
 - Sidereal (nirayana) positions via the Lahiri / Chitrapaksha ayanamsa
@@ -21,8 +23,8 @@ visitor's birth details in their own browser, and nothing leaves the device.
 - Whole-sign houses from the lagna, North Indian D-1 rasi chart
 - Dignity: exaltation, debilitation, moolatrikona, own sign, and natural friendship
 - Graha drishti including the special aspects of Mars, Jupiter, Saturn and the nodes
-- Vimshottari dasha with mahadasha and antardasha, from the Moon's nakshatra balance
-- Panchang: tithi, paksha, nakshatra, yoga, karana, vara, lunar month, ritu, Vikram and Shaka samvat
+- Vimshottari dasha to three levels — mahadasha, antardasha, pratyantardasha
+- Panchang read at sunrise, as a panchang is actually defined: tithi, paksha, nakshatra, yoga, karana, vara, lunar month, ritu, Vikram and Shaka samvat
 - Chinese year/month/day pillars, with Chinese New Year derived from the actual new moon
 
 **Interpretation** (`assets/js/reading.js`)

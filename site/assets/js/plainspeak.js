@@ -76,6 +76,8 @@
   }
 
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  // drop the capital when a connective now runs in front of the sentence
+  function lowerFirst(s, doIt) { return doIt ? s.charAt(0).toLowerCase() + s.slice(1) : s; }
   function pct(x) { return Math.round(x * 100) + '%'; }
 
   var SUBJECT = {
@@ -99,10 +101,21 @@
 
     /* --- narrative: three sentences, no jargon --- */
     var narrative = [];
-    narrative.push('In your chart, ' + subject + ' is run by ' + L.n + ' — the planet of ' + L.role + '.');
+    // phrased so the planet is the subject: some area names are plural
+    // ("your marriage and close partnerships") and would break agreement
+    narrative.push('In your chart, ' + L.n + ' is the planet in charge of ' + subject +
+      ' — ' + L.role + '.');
+
+    // a strong planet in a hard house, or a weak one in a good house, needs a
+    // connective or the two halves read as a contradiction
+    var strong = lord.dignity.score > 0, weak = lord.dignity.score < 0;
+    var hardHouse = [6,8,12].indexOf(lord.house) >= 0;
+    var goodHouse = [1,4,5,7,9,10].indexOf(lord.house) >= 0;
+    // only bridge when the two halves genuinely pull against each other
+    var joiner = (strong && hardHouse) ? 'Even so, ' : (weak && goodHouse) ? 'In its favour, ' : '';
     narrative.push(cap(L.n) + ' sits in the part of your chart that governs ' +
       HOUSE_SHORT[lord.house] + ', and it is ' + DIG_LONG[lord.dignity.label] + '. ' +
-      houseTypeLine(lord.house));
+      joiner + lowerFirst(houseTypeLine(lord.house), !!joiner));
 
     var d = K.dashaAt(chart.dasha, jdNow);
     if (d) {

@@ -2,156 +2,229 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0614">
-<meta name="description" content="Your Vedic kundli computed live from real planetary positions, with numerology, Western astrology, Chinese Four Pillars, tarot birth cards and Ayurvedic constitution — and plain-English answers to your questions with real dates.">
-<title>Jyotish Darpan — Your Kundli, Your Questions, Your Month</title>
+<meta name="description" content="Your Vedic kundli computed live from real planetary positions, with today's horoscope, star alignment, numerology, Western astrology, Chinese Four Pillars, tarot birth cards and Ayurvedic constitution — and plain-English answers to your questions with real dates.">
+<title>Jyotish Darpan — Your Kundli, Your Sky, Your Questions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E">
 </head>
 <body>
 
-<!-- ============ deep sky ============ -->
-<div id="universe">
+<!-- ============ the living sky: three star layers, nebula, the zodiac wheel ============ -->
+<div id="universe" aria-hidden="true">
   <div class="layer" id="starFar"><canvas id="cFar"></canvas></div>
   <div id="nebula"></div>
   <div id="galaxyCore"></div>
   <div class="layer" id="starMid"><canvas id="cMid"></canvas></div>
+  <div id="wheelBg"></div>
   <div class="layer" id="starNear"><canvas id="cNear"></canvas></div>
 </div>
 
-<!-- ============ gate ============ -->
-<div id="gate">
-  <form class="gate-inner" id="birthForm" autocomplete="off" novalidate>
-    <div class="eyebrow">Vedic · Western · Chinese · Numerology — one birth moment</div>
-    <h1 class="grad">Jyotish<br>Darpan</h1>
-    <p class="sub">The mirror of the sky. Give the moment you arrived, and every system is computed
-      from scratch — and explained in plain words.</p>
+<div id="progress" aria-hidden="true"><i></i></div>
 
-    <div class="section-h small">Who you are</div>
+<!-- ============ fixed chrome: appears once a chart is cast ============ -->
+<header id="topbar">
+  <div class="who">
+    <div class="nm" id="whoName">—</div>
+    <div class="sub"><span id="topNum"></span><span id="topChapter">—</span></div>
+  </div>
+  <div class="acts">
+    <button type="button" id="btnEdit" title="Change birth details">Edit</button>
+    <button type="button" id="btnPrint" title="Download this reading as text">Save</button>
+  </div>
+</header>
 
-    <div class="field">
-      <label for="fFullName">Full name at birth</label>
-      <input type="text" id="fFullName" placeholder="Exactly as on your birth certificate" maxlength="80">
-      <p class="field-hint">Numerology reads the letters of the name you were given — Expression,
-        Soul Urge and Personality all come from this.</p>
-    </div>
+<nav id="rail" aria-label="Chapters">
+  <div class="track"><i id="railFill"></i></div>
+  <div id="railItems"></div>
+</nav>
 
-    <div class="field">
-      <label for="fName">Name you go by now <span class="opt">optional</span></label>
-      <input type="text" id="fName" placeholder="If different — a nickname, a changed name" maxlength="60">
-      <p class="field-hint">Used for the Chaldean name number and for addressing you. Leave blank to
-        use your birth name.</p>
-    </div>
+<nav id="dock" aria-label="Chapters">
+  <div id="dockItems"></div>
+</nav>
 
-    <div class="field">
-      <label for="fGender">Gender <span class="opt">optional</span></label>
-      <select id="fGender">
-        <option value="">Prefer not to say</option>
-        <option value="female">Female</option>
-        <option value="male">Male</option>
-      </select>
-      <p class="field-hint">Only the Feng Shui Kua number uses this — it is defined differently
-        for men and women. Nothing else does.</p>
-    </div>
+<!-- ============ the journey ============ -->
+<main id="journey" class="locked">
 
-    <div class="section-h small">When and where</div>
-
-    <div class="field">
-      <label for="fDate">Date of birth</label>
-      <input type="date" id="fDate" min="1900-01-01" max="2035-12-31" required>
-    </div>
-
-    <div class="row">
-      <div class="field">
-        <label for="fTime">Time of birth</label>
-        <input type="time" id="fTime" value="12:00">
+  <!-- ---- landing: the verse of the day ---- -->
+  <section class="chapter landing" id="chLanding" data-title="Verse" data-glyph="ॐ" data-desc="A verse for today" data-nav="no">
+    <div class="landing-inner">
+      <div class="eyebrow">Jyotish Darpan · the mirror of the sky</div>
+      <h1 class="grad landing-title">Jyotish<br>Darpan</h1>
+      <div class="verse-card" id="verseCard">
+        <div class="verse-eyebrow"><span id="verseLabel">A verse for today</span><span class="verse-trad" id="verseTrad"></span></div>
+        <blockquote class="verse" id="verseText"></blockquote>
+        <div class="verse-src" id="verseSrc"></div>
+        <div class="verse-acts">
+          <button type="button" class="btn ghost sm" id="btnVerse">Another verse</button>
+        </div>
       </div>
-      <div class="field">
-        <label for="fTz">UTC offset</label>
-        <input type="text" id="fTz" value="+5.5" inputmode="decimal">
+      <p class="landing-sub">One birth moment, read through every tradition that has ever looked up:
+        the Vedic chart, the Western sky, the Chinese pillars, the numbers in your name.</p>
+      <button type="button" class="btn landing-cta" id="btnBegin">Begin your journey ↓</button>
+      <p class="landing-note">Everything is computed in your browser. Nothing you enter leaves this device.</p>
+    </div>
+  </section>
+
+  <!-- ---- 00 · the birth moment ---- -->
+  <section class="chapter hero" id="chBirth" data-title="Begin" data-glyph="✦" data-desc="Your birth moment">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="eyebrow">Vedic · Western · Chinese · Numerology · Tarot — one birth moment</div>
+        <h2 class="grad hero-title">The moment<br>you arrived</h2>
+        <p class="sub">Give the date, the time and the place, and every system is computed from
+          scratch — and explained in plain words.</p>
+
+        <div class="hero-sky">
+          <div id="heroWheel" class="wheel-host small"></div>
+          <div class="hero-sky-cap" id="heroCap">The sky is drawn live as you type your date, time and place.</div>
+        </div>
+
+        <ul class="hero-list">
+          <li><b>Date, time, place</b> — the Vedic chart, the rising sign, the houses, your life chapters, and the Chinese hour pillar.</li>
+          <li><b>Full name at birth</b> — numerology reads the letters you were given.</li>
+          <li><b>Gender</b> — only the Feng Shui Kua number needs it.</li>
+        </ul>
+        <p class="hero-privacy">Nothing is uploaded, stored on a server, or shared. Your details stay on this device.</p>
       </div>
+
+      <form class="gate-inner" id="birthForm" autocomplete="off" novalidate>
+        <div class="section-h small">Who you are</div>
+
+        <div class="field">
+          <label for="fFullName">Full name at birth</label>
+          <input type="text" id="fFullName" placeholder="Exactly as on your birth certificate" maxlength="80">
+          <p class="field-hint">Expression, Soul Urge and Personality numbers all come from this name.</p>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="fName">Name you go by <span class="opt">optional</span></label>
+            <input type="text" id="fName" placeholder="If different" maxlength="60">
+          </div>
+          <div class="field">
+            <label for="fGender">Gender <span class="opt">optional</span></label>
+            <select id="fGender">
+              <option value="">Prefer not to say</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-h small">When and where</div>
+
+        <div class="field">
+          <label for="fDate">Date of birth</label>
+          <input type="date" id="fDate" min="1900-01-01" max="2035-12-31" required>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="fTime">Time of birth</label>
+            <input type="time" id="fTime" value="12:00">
+          </div>
+          <div class="field">
+            <label for="fTz">UTC offset</label>
+            <input type="text" id="fTz" value="+5.5" inputmode="decimal">
+          </div>
+        </div>
+
+        <p class="tz-note" id="tzNote"></p>
+
+        <label class="check">
+          <input type="checkbox" id="fNoTime">
+          <span>I don’t know my birth time. Use noon — the Moon sign, numerology and the Chinese year
+            stay right, but the rising sign, houses and the hour pillar will be unreliable, and I’ll be told so.</span>
+        </label>
+
+        <div class="field">
+          <label for="fPlace">Place of birth</label>
+          <input type="text" id="fPlace" placeholder="Village, town or city…" autocomplete="off">
+          <div class="suggest" id="suggest" hidden></div>
+          <p class="field-hint">All 557,135 populated places in India, down to village level, plus major world cities.</p>
+        </div>
+
+        <div class="row" id="coordRow">
+          <div class="field">
+            <label for="fLat">Latitude</label>
+            <input type="text" id="fLat" placeholder="28.6139" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label for="fLon">Longitude (E+)</label>
+            <input type="text" id="fLon" placeholder="77.2090" inputmode="decimal">
+          </div>
+        </div>
+
+        <div class="err" id="gateErr" role="alert"></div>
+        <button type="submit" class="btn">Cast my chart</button>
+        <div class="hero-summary" id="heroSummary" hidden></div>
+      </form>
     </div>
+    <div class="scroll-cue" id="scrollCue" hidden><span>Scroll to begin</span><i></i></div>
+  </section>
 
-    <p class="tz-note" id="tzNote"></p>
-
-    <label class="check">
-      <input type="checkbox" id="fNoTime">
-      <span>I don’t know my birth time. Use noon — Moon sign, numerology and the Chinese year
-        stay right, but the rising sign, houses and the Chinese hour pillar will be unreliable,
-        and I’ll be told so.</span>
-    </label>
-
-    <div class="field">
-      <label for="fPlace">Place of birth</label>
-      <input type="text" id="fPlace" placeholder="Village, town or city…" autocomplete="off">
-      <div class="suggest" id="suggest" hidden></div>
-      <p class="field-hint">All 557,135 populated places in India, down to village level,
-        plus major world cities.</p>
+  <!-- ---- 01 · overview ---- -->
+  <section class="chapter" id="chOverview" data-title="Overview" data-glyph="◈" data-desc="Everything, on one page">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">You, at a glance</h2>
+      <p class="ch-lede">Eight readings of one moment. Scroll on, and each opens into its own chapter.</p>
+      <i class="ch-line"></i>
     </div>
-
-    <div class="row" id="coordRow">
-      <div class="field">
-        <label for="fLat">Latitude</label>
-        <input type="text" id="fLat" placeholder="28.6139" inputmode="decimal">
-      </div>
-      <div class="field">
-        <label for="fLon">Longitude (E+)</label>
-        <input type="text" id="fLon" placeholder="77.2090" inputmode="decimal">
-      </div>
-    </div>
-
-    <div class="err" id="gateErr" role="alert"></div>
-    <button type="submit" class="btn">Cast my chart</button>
-    <p class="hint">Everything is computed in your browser. Nothing is uploaded,
-      stored on a server, or shared. Your details stay on this device.</p>
-  </form>
-</div>
-
-<!-- ============ app shell ============ -->
-<div id="shell" hidden>
-
-  <header id="topbar">
-    <div class="who">
-      <div class="nm" id="whoName">—</div>
-      <div class="sub" id="whoSub">—</div>
-    </div>
-    <div class="acts">
-      <button type="button" id="btnEdit">Edit</button>
-      <button type="button" id="btnPrint">Save</button>
-    </div>
-  </header>
-
-  <!-- ---- overview ---- -->
-  <div class="scroll view" id="viewOverview">
-    <div class="wrap pad-top pad-bot">
+    <div class="ch-glyph">◈</div>
+    <div class="ch-body">
       <div id="timeWarn"></div>
-      <div class="ov-grid" id="ovGrid"></div>
-      <div class="section-h">You, at a glance</div>
+      <div class="ov-grid" id="ovGrid" data-stagger></div>
+      <div class="section-h">Who you are</div>
       <div id="ovPortrait"></div>
       <div class="section-h">Where you are in life right now</div>
-      <div id="ovNow"></div>
+      <div id="ovNow" data-stagger></div>
       <div class="section-h">Your strengths</div>
-      <div id="yogaHost"></div>
+      <div id="yogaHost" data-stagger></div>
       <div class="section-h">Things to be aware of</div>
-      <div id="doshaHost"></div>
+      <div id="doshaHost" data-stagger></div>
       <div class="section-h">What the chart says first</div>
-      <div id="chartNotes"></div>
-      <button type="button" class="btn ghost" id="btnSky">✦ &nbsp;Explore your sky</button>
-      <p class="foot">Vedic positions are sidereal (Lahiri). Western positions are tropical.<br>
-        Both come from the same computed sky; they differ by the ayanāṁśa, ~24°.</p>
+      <div id="chartNotes" data-stagger></div>
+      <div class="section-h">Continue the journey</div>
+      <div class="tiles" id="journeyTiles" data-stagger></div>
     </div>
-  </div>
+  </section>
 
-  <!-- ---- chart ---- -->
-  <div class="scroll view" id="viewChart" hidden>
-    <div class="wrap pad-top pad-bot">
-      <div class="section-h">Your birth chart</div>
-      <p class="lede sm">The North Indian rāśi chart. House 1 is the diamond at the top; the number
-        in each house is its sign, and the two-letter codes are the planets sitting there.</p>
+  <!-- ---- 02 · today ---- -->
+  <section class="chapter" id="chToday" data-title="Today" data-glyph="☉" data-desc="Your horoscope for today and the week ahead">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">Today, for you</h2>
+      <p class="ch-lede">Not a newspaper horoscope. The Moon, the stars and the calendar measured from
+        <em>your</em> Moon, today.</p>
+      <i class="ch-line"></i>
+    </div>
+    <div class="ch-glyph">☉</div>
+    <div class="ch-body">
+      <div id="todayHost"><div class="spinner">Reading today’s sky…</div></div>
+      <div class="section-h">The week ahead</div>
+      <div id="weekHost"></div>
+      <div class="section-h" id="muhurtaHead" hidden>Today’s timings</div>
+      <div id="muhurtaHost"></div>
+    </div>
+  </section>
+
+  <!-- ---- 03 · chart ---- -->
+  <section class="chapter" id="chChart" data-title="Chart" data-glyph="⊞" data-desc="The kundli: planets, houses, life chapters, strength">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">Your birth chart</h2>
+      <p class="ch-lede">The North Indian rāśi chart. House 1 is the diamond at the top; the number in each
+        house is its sign, and the two-letter codes are the planets sitting there.</p>
+      <i class="ch-line"></i>
+    </div>
+    <div class="ch-glyph">⊞</div>
+    <div class="ch-body">
       <div class="chart-wrap" id="chartHost"></div>
       <div class="chart-key">
         <span>North Indian · Rāśi (D‑1)</span><span>Whole‑sign houses</span><span>Lahiri ayanāṁśa</span>
@@ -178,39 +251,125 @@
       <p class="foot">Positions computed from Meeus solar–lunar theory and JPL planetary elements,<br>
         on Terrestrial Time, with Lahiri ayanāṁśa.</p>
     </div>
-  </div>
+  </section>
 
-  <!-- ---- ask ---- -->
-  <div class="scroll view" id="viewAsk" hidden>
-    <div class="wrap pad-top pad-bot">
-      <div class="section-h">Ask the chart</div>
-      <p class="lede">Three questions. Pick the area of life, say it in your own words, and you get a
+  <!-- ---- 04 · sky ---- -->
+  <section class="chapter" id="chSky" data-title="Sky" data-glyph="✦" data-desc="Star alignment: the sky at your birth against the sky right now">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">Star alignment</h2>
+      <p class="ch-lede">Your birth sky on the inner ring, tonight’s sky on the outer. Where the two
+        rings touch is where the present is pressing on the past.</p>
+      <i class="ch-line"></i>
+    </div>
+    <div class="ch-glyph">✦</div>
+    <div class="ch-body">
+      <div id="wheelHost" class="wheel-host"></div>
+      <div class="wheel-legend">
+        <span><i class="lg natal"></i>at your birth</span>
+        <span><i class="lg transit"></i>right now</span>
+        <span><i class="lg asc"></i>rising sign</span>
+        <span><i class="lg hit"></i>alignment</span>
+      </div>
+      <div class="section-h">What is aligned right now</div>
+      <div id="alignHost" data-stagger></div>
+      <div class="section-h">Where the planets are tonight</div>
+      <div class="tscroll"><table class="grahas" id="transitTable"></table></div>
+      <div class="section-h">The twelve signs, as they hold you</div>
+      <p class="lede sm">Gold is your rising sign, blue your Moon. Tap any sign to read it in your chart.</p>
+      <div id="skyMap"><div id="constellations"></div></div>
+      <div class="sky-note" id="skyLegend"></div>
+    </div>
+  </section>
+
+  <!-- ---- 05 · ask ---- -->
+  <section class="chapter" id="chAsk" data-title="Ask" data-glyph="✧" data-desc="Three questions, answered with real dates">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">Ask the chart</h2>
+      <p class="ch-lede">Three questions. Pick the area of life, say it in your own words, and you get a
         plain answer with real dates — and the full working underneath if you want it.</p>
+      <i class="ch-line"></i>
+    </div>
+    <div class="ch-glyph">✧</div>
+    <div class="ch-body">
       <div class="qcount" id="qCount"></div>
-      <div id="qHost"></div>
+      <div id="qHost" data-stagger></div>
       <p class="foot">Answers are deterministic: the same chart and the same question<br>
         always produce the same reading. No randomness anywhere.</p>
     </div>
-  </div>
+  </section>
 
-  <!-- ---- month ---- -->
-  <div class="scroll view" id="viewMonth" hidden>
-    <div class="wrap pad-top pad-bot">
-      <div id="monthHost"><div class="spinner">Reading the sky…</div></div>
-      <div class="section-h" id="muhurtaHead" hidden>Today’s timings</div>
-      <div id="muhurtaHost"></div>
+  <!-- ---- 06 · month ---- -->
+  <section class="chapter" id="chMonth" data-title="Month" data-glyph="☾" data-desc="This month across the Hindu, Chinese and Western calendars">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">Your month</h2>
+      <p class="ch-lede">Three calendars read together — the Hindu pañcāṅga, the Chinese year and month,
+        and the Western transits — then scored day by day from your own Moon.</p>
+      <i class="ch-line"></i>
     </div>
-  </div>
+    <div class="ch-glyph">☾</div>
+    <div class="ch-body">
+      <div id="monthHost"><div class="spinner">Reading the sky…</div></div>
+    </div>
+  </section>
 
-  <!-- ---- systems ---- -->
-  <div class="scroll view" id="viewSystems" hidden>
-    <div class="wrap pad-top pad-bot">
-      <div class="section-h">Numerology</div>
+  <!-- ---- 07 · numbers ---- -->
+  <section class="chapter" id="chNumbers" data-title="Numbers" data-glyph="9" data-desc="Numerology from your name and your birth date">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">Your numbers</h2>
+      <p class="ch-lede">Pythagorean and Chaldean numerology, the Lo Shu grid, your Kua number and the
+        cycles you are moving through.</p>
+      <i class="ch-line"></i>
+    </div>
+    <div class="ch-glyph">9</div>
+    <div class="ch-body">
       <div id="numHost"></div>
-      <div class="section-h">Western astrology</div>
+    </div>
+  </section>
+
+  <!-- ---- 08 · western ---- -->
+  <section class="chapter" id="chWestern" data-title="Western" data-glyph="♈" data-desc="Sun, Moon, rising, elements and aspects">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">Western astrology</h2>
+      <p class="ch-lede">The same sky measured from the spring equinox — the zodiac of newspapers and
+        birthday cards, read properly.</p>
+      <i class="ch-line"></i>
+    </div>
+    <div class="ch-glyph">♈</div>
+    <div class="ch-body">
       <div id="westHost"></div>
-      <div class="section-h">Chinese Four Pillars (BaZi)</div>
+    </div>
+  </section>
+
+  <!-- ---- 09 · chinese ---- -->
+  <section class="chapter" id="chChinese" data-title="Chinese" data-glyph="龍" data-desc="Four Pillars, your animal and your day master">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">Chinese Four Pillars</h2>
+      <p class="ch-lede">Year, month, day and hour, each a heavenly stem over an earthly branch. The day
+        stem is you.</p>
+      <i class="ch-line"></i>
+    </div>
+    <div class="ch-glyph">龍</div>
+    <div class="ch-body">
       <div id="baziHost"></div>
+    </div>
+  </section>
+
+  <!-- ---- 10 · other lenses ---- -->
+  <section class="chapter" id="chLenses" data-title="Lenses" data-glyph="☤" data-desc="Tarot birth cards and your Ayurvedic constitution">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">Two more lenses</h2>
+      <p class="ch-lede">Your tarot birth cards, and the constitution Ayurveda reads from your birth star.</p>
+      <i class="ch-line"></i>
+    </div>
+    <div class="ch-glyph">☤</div>
+    <div class="ch-body">
       <div class="section-h">Tarot birth cards</div>
       <div id="tarotHost"></div>
       <div class="section-h">Ayurvedic constitution</div>
@@ -218,30 +377,43 @@
       <p class="foot">Each of these reads the same birth moment through a different tradition.<br>
         Where they agree, take it seriously. Where they differ, that is information too.</p>
     </div>
-  </div>
+  </section>
 
-  <!-- ---- sky (opened from the overview) ---- -->
-  <div class="view" id="viewSky" hidden>
-    <div id="skyView">
-      <div id="constellations"></div>
-      <button type="button" class="sky-close" id="btnSkyClose">× &nbsp;Back</button>
-      <div class="sky-note">Drag to drift through the wheel · tap any sign<br>
-        <span id="skyLegend"></span></div>
+  <!-- ---- 11 · farewell ---- -->
+  <section class="chapter farewell" id="chFarewell" data-title="Farewell" data-glyph="☽" data-desc="A word for the road, chosen from what you asked">
+    <div class="ch-head reveal">
+      <div class="ch-num"></div>
+      <h2 class="ch-title grad">A word for the road</h2>
+      <p class="ch-lede">Chosen from what you asked and what the sky answered.</p>
+      <i class="ch-line"></i>
     </div>
-  </div>
+    <div class="ch-glyph">☽</div>
+    <div class="ch-body">
+      <div id="recapHost" data-stagger></div>
+      <div class="verse-card farewell-card" id="byeCard">
+        <div class="verse-eyebrow"><span id="byeLabel">To carry with you</span><span class="verse-trad" id="byeTrad"></span></div>
+        <blockquote class="verse" id="byeText"></blockquote>
+        <div class="verse-src" id="byeSrc"></div>
+        <p class="bye-why" id="byeWhy"></p>
+      </div>
+      <div class="journey-end">
+        <p>Vedic positions are sidereal (Lahiri). Western positions are tropical. Both come from the same
+          computed sky; they differ by the ayanāṁśa, about 24°.</p>
+        <p>This is an astronomy engine wrapped in traditional interpretation. Nothing here is medical,
+          legal or financial advice.</p>
+        <div class="end-acts">
+          <button type="button" class="btn ghost sm" id="btnSaveEnd">Save this reading</button>
+          <button type="button" class="btn ghost sm" id="btnTop">↑ &nbsp;Back to the top</button>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <nav id="nav">
-    <button type="button" data-view="viewOverview" class="on"><span class="ic">◈</span><span class="tx">Overview</span></button>
-    <button type="button" data-view="viewChart"><span class="ic">⊞</span><span class="tx">Chart</span></button>
-    <button type="button" data-view="viewAsk"><span class="ic">✧</span><span class="tx">Ask</span></button>
-    <button type="button" data-view="viewMonth"><span class="ic">☾</span><span class="tx">Month</span></button>
-    <button type="button" data-view="viewSystems"><span class="ic">⚭</span><span class="tx">Systems</span></button>
-  </nav>
-</div>
+</main>
 
 <!-- ============ detail sheet ============ -->
 <div id="sheet">
-  <button type="button" class="closer" id="sheetClose">×</button>
+  <button type="button" class="closer" id="sheetClose" aria-label="Close">×</button>
   <div class="wrap pad-top pad-bot" id="sheetBody"></div>
 </div>
 
@@ -255,6 +427,8 @@
 <script src="assets/js/forecast.js"></script>
 <script src="assets/js/plainspeak.js"></script>
 <script src="assets/js/reading.js"></script>
+<script src="assets/js/quotes.js"></script>
+<script src="assets/js/immersive.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>
